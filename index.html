@@ -8,10 +8,10 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts: Cinzel & Inter -->
+    <!-- Google Fonts: Inter & Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -54,44 +54,49 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #09090b;
+            background-color: #060d08;
             color: #f4f4f5;
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(217, 119, 6, 0.06) 0%, transparent 40%);
+                radial-gradient(circle at 50% 0%, rgba(34, 197, 94, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(21, 128, 61, 0.08) 0%, transparent 40%);
             background-attachment: fixed;
         }
 
-        .font-greek { font-family: 'Cinzel', serif; }
+        .font-brand { font-family: 'Montserrat', sans-serif; }
 
-        .gold-gradient {
-            background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #d97706 100%);
+        /* Gradiente Verde LEXFA */
+        .lexfa-gradient {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #15803d 100%);
+        }
+
+        .lexfa-gradient-hover:hover {
+            background: linear-gradient(135deg, #86efac 0%, #4ade80 50%, #16a34a 100%);
         }
 
         .dark-card {
-            background: rgba(18, 18, 22, 0.85);
+            background: rgba(10, 20, 13, 0.88);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(245, 158, 11, 0.22);
+            border: 1px solid rgba(34, 197, 94, 0.25);
             box-shadow: 0 10px 30px -5px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08);
         }
 
         .dark-card:hover {
-            border-color: rgba(245, 158, 11, 0.45);
-            box-shadow: 0 15px 35px -5px rgba(0,0,0,0.9), 0 0 20px rgba(245, 158, 11, 0.15);
+            border-color: rgba(34, 197, 94, 0.5);
+            box-shadow: 0 15px 35px -5px rgba(0,0,0,0.9), 0 0 20px rgba(34, 197, 94, 0.18);
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #09090b; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.2); }
-        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+        ::-webkit-scrollbar-track { background: #060d08; }
+        ::-webkit-scrollbar-thumb { background: #164e27; border-radius: 4px; border: 1px solid rgba(34, 197, 94, 0.3); }
+        ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
 
         .stat-highlight {
-            background-color: #f59e0b !important;
+            background-color: #22c55e !important;
             color: #000000 !important;
             font-weight: 800 !important;
         }
 
-        .contenedor-logo img { width: 42px; height: 42px; object-fit: contain; display: block; }
+        .contenedor-logo img { width: 44px; height: 44px; object-fit: contain; display: block; }
 
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -101,7 +106,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '7.0',
+                DATA_VERSION: '8.0',
                 currentTab: 'table',
                 
                 selectedCategory: 'Varonil',
@@ -121,6 +126,7 @@
                 copied: false,
                 selectedPlayer: null,
                 
+                // Autenticación de Admin
                 isLoggedIn: false,
                 adminEmail: '',
                 adminPassword: '',
@@ -129,7 +135,7 @@
 
                 newPlayerNum: '',
                 newPlayerName: '',
-                newPlayerGod: '',
+                newPlayerPos: '',
 
                 teamsData: {
                     'Varonil': {
@@ -194,8 +200,8 @@
                     if (roster.some(p => String(p.num) === String(this.newPlayerNum))) {
                         alert("Ya existe el número en este equipo."); return;
                     }
-                    roster.push({ num: String(this.newPlayerNum), name: this.newPlayerName, pos: this.newPlayerGod || 'Jugador' });
-                    this.newPlayerNum = ''; this.newPlayerName = ''; this.newPlayerGod = '';
+                    roster.push({ num: String(this.newPlayerNum), name: this.newPlayerName, pos: this.newPlayerPos || 'Jugador' });
+                    this.newPlayerNum = ''; this.newPlayerName = ''; this.newPlayerPos = '';
                     this.saveToFirebase(true);
                 },
 
@@ -212,7 +218,7 @@
 
                     if (this.selectedJornada === 'global') {
                         return roster.map(rPlayer => {
-                            let agg = { num: rPlayer.num, name: rPlayer.name, god: rPlayer.pos, pasesTD: 0, td: 0, intercepcion: 0, sacks: 0 };
+                            let agg = { num: rPlayer.num, name: rPlayer.name, pos: rPlayer.pos, pasesTD: 0, td: 0, intercepcion: 0, sacks: 0 };
                             this.availableJornadas.forEach(jKey => {
                                 const list = teamJornadas[jKey] || [];
                                 const pData = list.find(p => String(p.num) === String(rPlayer.num));
@@ -232,7 +238,7 @@
                             return {
                                 num: rPlayer.num,
                                 name: rPlayer.name,
-                                god: rPlayer.pos,
+                                pos: rPlayer.pos,
                                 pasesTD: Number(pData.pasesTD || 0),
                                 td: Number(pData.td || 0),
                                 intercepcion: Number(pData.intercepcion || 0),
@@ -242,7 +248,6 @@
                     }
                 },
 
-                // Calcula los 6 mejores jugadores (Top 6 MVPs) de toda la categoría actual acumulada
                 get top6CategoryMVPs() {
                     let allCategoryPlayers = [];
                     const teamsInCat = this.teamsByCategory[this.selectedCategory] || [];
@@ -265,7 +270,6 @@
                                     }
                                 });
 
-                                // Fórmula de impacto para MVP: PasesTD(6) + TDs(6) + Intercepciones(4) + Sacks(3)
                                 stats.score = (stats.pasesTD * 6) + (stats.td * 6) + (stats.intercepcion * 4) + (stats.sacks * 3);
                                 if (stats.score > 0) {
                                     allCategoryPlayers.push(stats);
@@ -274,7 +278,6 @@
                         }
                     });
 
-                    // Ordenar por mayor puntaje y tomar los 6 mejores
                     return allCategoryPlayers.sort((a, b) => b.score - a.score).slice(0, 6);
                 },
 
@@ -283,7 +286,7 @@
                     const q = this.searchQuery.toLowerCase();
                     return this.currentPlayers.filter(p => 
                         p.name.toLowerCase().includes(q) || 
-                        p.god.toLowerCase().includes(q) || 
+                        p.pos.toLowerCase().includes(q) || 
                         p.num.toString().includes(q)
                     );
                 },
@@ -308,7 +311,7 @@
                     if (!auth) { this.loginError = "Auth no inicializado."; return; }
                     auth.signInWithEmailAndPassword(this.adminEmail, this.adminPassword)
                         .then(() => { this.adminEmail = ''; this.adminPassword = ''; this.showLoginModal = false; })
-                        .catch(() => { this.loginError = "Credenciales incorrectas."; });
+                        .catch(() => { this.loginError = "Credenciales de Admin incorrectas."; });
                 },
 
                 logoutAdmin() {
@@ -401,28 +404,28 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-black" x-data="lexfaHub">
+<body class="min-h-screen flex flex-col justify-between selection:bg-green-500 selection:text-black" x-data="lexfaHub">
 
     <!-- Header -->
-    <header class="border-b border-amber-500/30 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40 shadow-xl shadow-black/60">
+    <header class="border-b border-green-500/30 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40 shadow-xl shadow-black/60">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-3">
                 <div class="contenedor-logo">
-                    <img src="Olympus.png" alt="Lexfa Logo" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=L&background=f59e0b&color=000';">
+                    <img src="Olympus.png" alt="Lexfa Logo" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=L&background=22c55e&color=fff';">
                 </div>
                 <div>
-                    <h1 class="font-greek font-extrabold text-lg sm:text-xl text-white tracking-wider flex items-center gap-2">
-                        LEXFA FLAG MEX <span class="text-xs font-sans bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold">2026</span>
+                    <h1 class="font-brand font-black text-lg sm:text-xl text-white tracking-wider flex items-center gap-2">
+                        LEXFA FLAG MEX <span class="text-xs font-sans bg-green-500/20 text-green-400 border border-green-500/40 px-2 py-0.5 rounded-full font-bold">2026</span>
                     </h1>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 flex-wrap justify-end">
-                <!-- Categoría -->
+                <!-- Selector de Categoría -->
                 <div class="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
                     <template x-for="cat in categories" :key="cat">
                         <button @click="changeCategory(cat)" 
-                                :class="selectedCategory === cat ? 'gold-gradient text-black font-extrabold shadow-md' : 'text-zinc-400 hover:text-white'" 
+                                :class="selectedCategory === cat ? 'lexfa-gradient text-black font-extrabold shadow-md' : 'text-zinc-400 hover:text-white'" 
                                 class="px-2.5 py-1 rounded-lg text-xs font-bold transition" 
                                 x-text="cat">
                         </button>
@@ -430,38 +433,38 @@
                 </div>
 
                 <!-- Equipos -->
-                <select x-model="selectedTeam" class="bg-zinc-900 border border-amber-500/50 text-amber-300 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
+                <select x-model="selectedTeam" class="bg-zinc-900 border border-green-500/50 text-green-300 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
                     <template x-for="t in currentTeams" :key="t">
                         <option :value="t" x-text="t" class="bg-zinc-900 text-white"></option>
                     </template>
                 </select>
 
                 <!-- Jornada / Playoffs -->
-                <select x-model="selectedJornada" class="bg-zinc-900 border border-amber-500/50 text-amber-300 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
-                    <option value="global" class="bg-zinc-900 text-amber-400 font-bold">⭐ Global (Temporada)</option>
+                <select x-model="selectedJornada" class="bg-zinc-900 border border-green-500/50 text-green-300 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
+                    <option value="global" class="bg-zinc-900 text-green-400 font-bold">⭐ Global (Temporada)</option>
                     <hr class="border-zinc-800">
                     <template x-for="j in availableJornadas" :key="j">
                         <option :value="String(j)" x-text="isNaN(j) ? j.toUpperCase() : 'Jornada ' + j" class="bg-zinc-900 text-white"></option>
                     </template>
                 </select>
 
-                <!-- Login / Logout -->
+                <!-- Login / Logout (Admin) -->
                 <template x-if="isLoggedIn">
                     <button @click="logoutAdmin()" class="bg-red-900/40 hover:bg-red-900 text-red-300 border border-red-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
-                        <i class="fa-solid fa-right-from-bracket"></i> Salir
+                        <i class="fa-solid fa-right-from-bracket"></i> Salir Admin
                     </button>
                 </template>
                 <template x-if="!isLoggedIn">
-                    <button @click="showLoginModal = true" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
-                        <i class="fa-solid fa-lock"></i> Login Admin
+                    <button @click="showLoginModal = true" class="bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+                        <i class="fa-solid fa-user-shield"></i> Login Admin
                     </button>
                 </template>
             </div>
         </div>
     </header>
 
-    <!-- Toast -->
-    <div x-show="showSuccessToast" x-transition class="fixed bottom-5 right-5 z-50 bg-amber-500 text-black font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 border border-amber-300">
+    <!-- Toast Notificación -->
+    <div x-show="showSuccessToast" x-transition class="fixed bottom-5 right-5 z-50 bg-green-500 text-black font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 border border-green-300">
         <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
         <span>¡Datos sincronizados en la nube!</span>
     </div>
@@ -472,17 +475,17 @@
         <!-- Pestañas -->
         <div class="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 mb-6 overflow-x-auto">
             <div class="flex items-center gap-2">
-                <button @click="currentTab = 'table'" :class="currentTab === 'table' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'table'" :class="currentTab === 'table' ? 'lexfa-gradient text-black font-extrabold shadow-green-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-table-list"></i> Tabla General
                 </button>
-                <button @click="currentTab = 'mvp'" :class="currentTab === 'mvp' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'mvp'" :class="currentTab === 'mvp' ? 'lexfa-gradient text-black font-extrabold shadow-green-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-trophy"></i> Top 6 MVPs (<span x-text="selectedCategory"></span>)
                 </button>
-                <button @click="currentTab = 'cards'" :class="currentTab === 'cards' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'cards'" :class="currentTab === 'cards' ? 'lexfa-gradient text-black font-extrabold shadow-green-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-users"></i> Tarjetas
                 </button>
-                <button @click="currentTab = 'edit'" :class="currentTab === 'edit' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square"></i> Editar Datos
+                <button @click="currentTab = 'edit'" :class="currentTab === 'edit' ? 'lexfa-gradient text-black font-extrabold shadow-green-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> Panel Admin
                 </button>
             </div>
 
@@ -496,13 +499,13 @@
         <div class="mb-4">
             <div class="relative max-w-md">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm"></i>
-                <input type="text" x-model="searchQuery" placeholder="Buscar jugador o número..." class="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                <input type="text" x-model="searchQuery" placeholder="Buscar jugador o número..." class="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:outline-none focus:border-green-500">
             </div>
         </div>
 
         <!-- VISTA 1: TABLA GENERAL -->
         <div x-show="currentTab === 'table'" x-transition class="space-y-4">
-            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl border border-amber-500/20">
+            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl border border-green-500/20">
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left text-zinc-300">
                         <thead>
@@ -510,18 +513,18 @@
                                 <th class="py-3 px-4 text-left">#</th>
                                 <th class="py-3 px-4 text-left">Jugador</th>
                                 <th class="py-3 px-4 text-left">Posición</th>
-                                <th class="py-3 px-4 text-center bg-amber-500/10 text-amber-300">Pases de Anotación (Pases TD)</th>
-                                <th class="py-3 px-4 text-center bg-amber-500/10 text-amber-300">Touchdowns (TD)</th>
-                                <th class="py-3 px-4 text-center bg-amber-600/10 text-amber-400">Intercepciones (INT)</th>
-                                <th class="py-3 px-4 text-center bg-amber-600/10 text-amber-400">Sacks</th>
+                                <th class="py-3 px-4 text-center bg-green-500/10 text-green-300">Pases de Anotación (Pases TD)</th>
+                                <th class="py-3 px-4 text-center bg-green-500/10 text-green-300">Touchdowns (TD)</th>
+                                <th class="py-3 px-4 text-center bg-emerald-600/10 text-green-400">Intercepciones (INT)</th>
+                                <th class="py-3 px-4 text-center bg-emerald-600/10 text-green-400">Sacks</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-800/60 font-medium">
                             <template x-for="p in filteredPlayers" :key="p.num">
-                                <tr class="hover:bg-amber-500/5 transition">
-                                    <td class="py-3 px-4 font-extrabold text-amber-400" x-text="'#' + p.num"></td>
+                                <tr class="hover:bg-green-500/5 transition">
+                                    <td class="py-3 px-4 font-extrabold text-green-400" x-text="'#' + p.num"></td>
                                     <td class="py-3 px-4 font-bold text-white" x-text="p.name"></td>
-                                    <td class="py-3 px-4 text-zinc-400" x-text="p.god"></td>
+                                    <td class="py-3 px-4 text-zinc-400" x-text="p.pos"></td>
                                     <td class="py-3 px-4 text-center font-bold" :class="p.pasesTD > 0 ? 'stat-highlight' : ''" x-text="p.pasesTD || 0"></td>
                                     <td class="py-3 px-4 text-center font-bold" :class="p.td > 0 ? 'stat-highlight' : ''" x-text="p.td || 0"></td>
                                     <td class="py-3 px-4 text-center font-bold" :class="p.intercepcion > 0 ? 'stat-highlight' : ''" x-text="p.intercepcion || 0"></td>
@@ -536,31 +539,31 @@
 
         <!-- VISTA 2: TOP 6 MVPs POR CATEGORÍA -->
         <div x-show="currentTab === 'mvp'" x-transition class="space-y-4">
-            <div class="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl mb-4 text-xs text-amber-300 flex items-center gap-3">
-                <i class="fa-solid fa-trophy text-xl text-amber-400"></i>
-                <span>Ranking de los <strong>6 mejores jugadores</strong> de la categoría <strong><span x-text="selectedCategory"></span></strong> basado en su impacto general (Pases TD, TDs, Intercepciones y Sacks de todos los equipos).</span>
+            <div class="bg-green-500/10 border border-green-500/30 p-4 rounded-2xl mb-4 text-xs text-green-300 flex items-center gap-3">
+                <i class="fa-solid fa-trophy text-xl text-green-400"></i>
+                <span>Ranking de los <strong>6 mejores jugadores</strong> de la categoría <strong><span x-text="selectedCategory"></span></strong> basado en su impacto general.</span>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <template x-for="(mvp, index) in top6CategoryMVPs" :key="mvp.num + mvp.team">
-                    <div class="dark-card p-5 rounded-2xl border border-amber-500/40 relative overflow-hidden flex flex-col justify-between">
-                        <div class="absolute top-0 right-0 gold-gradient text-black font-black text-xs px-3 py-1 rounded-bl-xl uppercase font-greek" x-text="'#' + (index + 1) + ' MVP'"></div>
+                    <div class="dark-card p-5 rounded-2xl border border-green-500/40 relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute top-0 right-0 lexfa-gradient text-black font-black text-xs px-3 py-1 rounded-bl-xl uppercase font-brand" x-text="'#' + (index + 1) + ' MVP'"></div>
                         
                         <div>
                             <div class="flex items-center gap-3 mb-3">
-                                <span class="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center font-mono font-black text-black text-lg shadow" x-text="'#' + mvp.num"></span>
+                                <span class="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center font-mono font-black text-black text-lg shadow" x-text="'#' + mvp.num"></span>
                                 <div>
                                     <h4 class="font-black text-lg text-white" x-text="mvp.name"></h4>
-                                    <p class="text-xs text-amber-400 font-bold" x-text="mvp.team + ' • ' + mvp.pos"></p>
+                                    <p class="text-xs text-green-400 font-bold" x-text="mvp.team + ' • ' + mvp.pos"></p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-2 bg-zinc-950/80 p-3 rounded-xl border border-zinc-800 text-xs mt-3">
-                            <div class="flex justify-between"><span class="text-zinc-400">Pases TD:</span><span class="font-bold text-amber-400" x-text="mvp.pasesTD"></span></div>
+                            <div class="flex justify-between"><span class="text-zinc-400">Pases TD:</span><span class="font-bold text-green-400" x-text="mvp.pasesTD"></span></div>
                             <div class="flex justify-between"><span class="text-zinc-400">Touchdowns:</span><span class="font-bold text-emerald-400" x-text="mvp.td"></span></div>
-                            <div class="flex justify-between"><span class="text-zinc-400">INTs:</span><span class="font-bold text-purple-400" x-text="mvp.intercepcion"></span></div>
-                            <div class="flex justify-between"><span class="text-zinc-400">Sacks:</span><span class="font-bold text-red-400" x-text="mvp.sacks"></span></div>
+                            <div class="flex justify-between"><span class="text-zinc-400">INTs:</span><span class="font-bold text-teal-400" x-text="mvp.intercepcion"></span></div>
+                            <div class="flex justify-between"><span class="text-zinc-400">Sacks:</span><span class="font-bold text-lime-400" x-text="mvp.sacks"></span></div>
                         </div>
                     </div>
                 </template>
@@ -573,50 +576,50 @@
             </div>
         </div>
         
-        <!-- VISTA 3: TARJETAS -->
+        <!-- VISTA 3: TARJETAS JUGADORES -->
         <div x-show="currentTab === 'cards'" class="space-y-6" x-transition>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <template x-for="p in filteredPlayers" :key="p.num">
-                    <div class="dark-card rounded-2xl p-5 hover:border-amber-500 transition cursor-pointer relative overflow-hidden group" @click="selectedPlayer = p">
+                    <div class="dark-card rounded-2xl p-5 hover:border-green-500 transition cursor-pointer relative overflow-hidden group" @click="selectedPlayer = p">
                         <div class="flex items-center justify-between mb-3">
-                            <span class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-mono font-extrabold text-amber-400 text-base" x-text="'#' + p.num"></span>
-                            <span class="text-xs px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 font-bold" x-text="p.god"></span>
+                            <span class="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/30 flex items-center justify-center font-mono font-extrabold text-green-400 text-base" x-text="'#' + p.num"></span>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 font-bold" x-text="p.pos"></span>
                         </div>
                         <h4 class="font-black text-lg text-white mb-3" x-text="p.name"></h4>
                         <div class="grid grid-cols-2 gap-2 text-xs bg-zinc-950 p-2.5 rounded-xl border border-zinc-800/80">
-                            <div class="text-zinc-400">Pases TD: <strong class="text-amber-400" x-text="p.pasesTD || 0"></strong></div>
+                            <div class="text-zinc-400">Pases TD: <strong class="text-green-400" x-text="p.pasesTD || 0"></strong></div>
                             <div class="text-zinc-400">TDs: <strong class="text-emerald-400" x-text="p.td || 0"></strong></div>
-                            <div class="text-zinc-400">INTs: <strong class="text-purple-400" x-text="p.intercepcion || 0"></strong></div>
-                            <div class="text-zinc-400">Sacks: <strong class="text-red-400" x-text="p.sacks || 0"></strong></div>
+                            <div class="text-zinc-400">INTs: <strong class="text-teal-400" x-text="p.intercepcion || 0"></strong></div>
+                            <div class="text-zinc-400">Sacks: <strong class="text-lime-400" x-text="p.sacks || 0"></strong></div>
                         </div>
                     </div>
                 </template>
             </div>
         </div>
 
-        <!-- VISTA 4: EDITAR DATOS -->
+        <!-- VISTA 4: PANEL ADMIN / EDITAR DATOS -->
         <div x-show="currentTab === 'edit'" x-transition class="space-y-6">
             
             <!-- GESTIÓN DE ROSTER -->
-            <div class="dark-card p-5 rounded-2xl border border-amber-500/30">
-                <h3 class="font-greek font-bold text-sm text-amber-400 mb-3 flex items-center gap-2">
+            <div class="dark-card p-5 rounded-2xl border border-green-500/30">
+                <h3 class="font-brand font-bold text-sm text-green-400 mb-3 flex items-center gap-2">
                     <i class="fa-solid fa-users-gear"></i> Roster de: <span class="text-white underline" x-text="selectedTeam + ' (' + selectedCategory + ')'"></span>
                 </h3>
 
                 <div class="flex flex-wrap gap-2 items-end mb-4">
                     <div>
                         <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Número #</label>
-                        <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-20 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-20 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-green-500">
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Nombre Completo</label>
-                        <input type="text" x-model="newPlayerName" placeholder="Ej. Carlos Pérez" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <input type="text" x-model="newPlayerName" placeholder="Ej. Carlos Pérez" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-green-500">
                     </div>
                     <div>
                         <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Posición</label>
-                        <input type="text" x-model="newPlayerGod" placeholder="Ej. QB / WR" class="w-32 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <input type="text" x-model="newPlayerPos" placeholder="Ej. QB / WR" class="w-32 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-green-500">
                     </div>
-                    <button @click="addPlayerToTeam()" class="gold-gradient text-black font-extrabold text-xs px-4 py-2 rounded-xl shadow hover:scale-105 transition">
+                    <button @click="addPlayerToTeam()" class="lexfa-gradient text-black font-extrabold text-xs px-4 py-2 rounded-xl shadow hover:scale-105 transition">
                         <i class="fa-solid fa-user-plus mr-1"></i> Agregar
                     </button>
                 </div>
@@ -624,7 +627,7 @@
                 <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1">
                     <template x-for="p in currentRoster" :key="p.num">
                         <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
-                            <span class="font-mono font-bold text-amber-400" x-text="'#' + p.num"></span>
+                            <span class="font-mono font-bold text-green-400" x-text="'#' + p.num"></span>
                             <span class="text-white font-medium" x-text="p.name"></span>
                             <span class="text-zinc-500 text-[10px]" x-text="'(' + p.pos + ')'"></span>
                             <button @click="removePlayerFromTeam(p.num)" class="text-red-400 hover:text-red-300 ml-2"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
@@ -635,7 +638,7 @@
 
             <!-- CAPTURA RÁPIDA DE ESTADÍSTICAS -->
             <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-                <h2 class="font-greek text-lg font-bold text-amber-400 flex items-center gap-2">
+                <h2 class="font-brand text-lg font-bold text-green-400 flex items-center gap-2">
                     <i class="fa-solid fa-shield-halved text-sm"></i> Captura de Estadísticas
                 </h2>
                 
@@ -644,38 +647,38 @@
                         <button @click="addJornada()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs px-3 py-2 rounded-xl border border-zinc-700 transition">
                             <i class="fa-solid fa-plus mr-1"></i> Nueva Jornada
                         </button>
-                        <button @click="guardarCambiosAdmin()" class="gold-gradient text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition">
+                        <button @click="guardarCambiosAdmin()" class="lexfa-gradient text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition">
                             <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Guardar en la Nube
                         </button>
                     </div>
                 </template>
             </div>
 
-            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl border border-amber-500/20">
+            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl border border-green-500/20">
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left text-zinc-300">
                         <thead>
                             <tr class="bg-zinc-900/90 text-zinc-400 text-[10px] uppercase border-b border-zinc-800 text-center font-bold">
                                 <th class="py-3 px-4 text-left">#</th>
                                 <th class="py-3 px-4 text-left">Jugador</th>
-                                <th class="py-3 px-4 text-center bg-amber-500/10 text-amber-300">Pases de Anotación (Pases TD)</th>
-                                <th class="py-3 px-4 text-center bg-amber-500/10 text-amber-300">Touchdowns (TD)</th>
-                                <th class="py-3 px-4 text-center bg-amber-600/10 text-amber-400">Intercepciones (INT)</th>
-                                <th class="py-3 px-4 text-center bg-amber-600/10 text-amber-400">Sacks</th>
+                                <th class="py-3 px-4 text-center bg-green-500/10 text-green-300">Pases de Anotación (Pases TD)</th>
+                                <th class="py-3 px-4 text-center bg-green-500/10 text-green-300">Touchdowns (TD)</th>
+                                <th class="py-3 px-4 text-center bg-emerald-600/10 text-green-400">Intercepciones (INT)</th>
+                                <th class="py-3 px-4 text-center bg-emerald-600/10 text-green-400">Sacks</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-800/60">
                             <template x-for="p in (currentTeamJornadas[selectedJornada] || [])" :key="p.num">
                                 <tr class="hover:bg-zinc-900/40">
-                                    <td class="py-3 px-4 font-extrabold text-amber-400" x-text="'#' + p.num"></td>
+                                    <td class="py-3 px-4 font-extrabold text-green-400" x-text="'#' + p.num"></td>
                                     <td class="py-3 px-4 font-bold text-white" x-text="currentRoster.find(r => String(r.num) === String(p.num))?.name || ''"></td>
                                     
                                     <!-- Pases TD -->
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button @click="dec(p, 'pasesTD')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.pasesTD" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-amber-500">
-                                            <button @click="inc(p, 'pasesTD')" class="w-7 h-7 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-xs">+</button>
+                                            <input type="number" x-model.number="p.pasesTD" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-green-500">
+                                            <button @click="inc(p, 'pasesTD')" class="w-7 h-7 rounded bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-black font-bold text-xs">+</button>
                                         </div>
                                     </td>
 
@@ -683,8 +686,8 @@
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button @click="dec(p, 'td')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.td" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-amber-500">
-                                            <button @click="inc(p, 'td')" class="w-7 h-7 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-xs">+</button>
+                                            <input type="number" x-model.number="p.td" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-green-500">
+                                            <button @click="inc(p, 'td')" class="w-7 h-7 rounded bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-black font-bold text-xs">+</button>
                                         </div>
                                     </td>
 
@@ -692,8 +695,8 @@
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button @click="dec(p, 'intercepcion')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.intercepcion" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-amber-500">
-                                            <button @click="inc(p, 'intercepcion')" class="w-7 h-7 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-xs">+</button>
+                                            <input type="number" x-model.number="p.intercepcion" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-green-500">
+                                            <button @click="inc(p, 'intercepcion')" class="w-7 h-7 rounded bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-black font-bold text-xs">+</button>
                                         </div>
                                     </td>
 
@@ -701,8 +704,8 @@
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button @click="dec(p, 'sacks')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.sacks" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-amber-500">
-                                            <button @click="inc(p, 'sacks')" class="w-7 h-7 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-xs">+</button>
+                                            <input type="number" x-model.number="p.sacks" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-green-500">
+                                            <button @click="inc(p, 'sacks')" class="w-7 h-7 rounded bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-black font-bold text-xs">+</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -715,29 +718,30 @@
 
     </main>
 
-    <!-- MODAL LOGIN -->
+    <!-- MODAL LOGIN ADMIN -->
     <div x-show="showLoginModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" @click.self="showLoginModal = false" x-cloak>
-        <div class="dark-card rounded-2xl max-w-sm w-full p-6 relative border border-amber-500/40 shadow-2xl" @click.stop>
+        <div class="dark-card rounded-2xl max-w-sm w-full p-6 relative border border-green-500/40 shadow-2xl" @click.stop>
             <button @click="showLoginModal = false" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 transition">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <div class="text-center mb-6">
-                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3 text-amber-400 text-xl">
-                    <i class="fa-solid fa-lock"></i>
+                <div class="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-3 text-green-400 text-xl">
+                    <i class="fa-solid fa-user-shield"></i>
                 </div>
-                <h3 class="font-greek font-black text-xl text-white">ACCESO DE ADMIN</h3>
+                <h3 class="font-brand font-black text-xl text-white">ACCESO DE ADMIN</h3>
+                <p class="text-xs text-zinc-400 mt-1">Ingresa credenciales de administrador de la liga</p>
             </div>
             <form @submit.prevent="loginAdmin()" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-amber-400 mb-1 uppercase">Correo</label>
-                    <input type="email" x-model="adminEmail" required placeholder="admin@tochostat.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <label class="block text-xs font-bold text-green-400 mb-1 uppercase">Correo Admin</label>
+                    <input type="email" x-model="adminEmail" required placeholder="admin@lexfa.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-green-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-amber-400 mb-1 uppercase">Contraseña</label>
-                    <input type="password" x-model="adminPassword" required placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <label class="block text-xs font-bold text-green-400 mb-1 uppercase">Contraseña</label>
+                    <input type="password" x-model="adminPassword" required placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-green-500">
                 </div>
                 <template x-if="loginError"><p class="text-xs text-red-400 font-bold text-center" x-text="loginError"></p></template>
-                <button type="submit" class="w-full gold-gradient text-black font-extrabold text-xs py-3 rounded-xl shadow-lg transition">Iniciar Sesión</button>
+                <button type="submit" class="w-full lexfa-gradient text-black font-extrabold text-xs py-3 rounded-xl shadow-lg transition">Iniciar Sesión Admin</button>
             </form>
         </div>
     </div>
@@ -745,7 +749,7 @@
     <!-- Footer -->
     <footer class="border-t border-zinc-800/80 bg-zinc-950 py-4 mt-8">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-xs text-zinc-500 font-medium">© 2026 <span class="text-amber-400 font-bold font-greek">Lexfa Flag Mex</span> • Official Statistics Hub</p>
+            <p class="text-xs text-zinc-500 font-medium">© 2026 <span class="text-green-400 font-bold font-brand">Lexfa Flag Mex</span> • Official Statistics Hub</p>
         </div>
     </footer>
 </body>
