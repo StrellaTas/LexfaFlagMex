@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexfa Mexico Junior & Flag  - Estadisticas</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Cinzel (Greek aesthetics) & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDKs (v9 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // -----------------------------------------------------------------
+        // ⚙️ CONFIGURACIÓN DE FIREBASE
+        // -----------------------------------------------------------------
+        const firebaseConfig = {
+        apiKey: "AIzaSyDaA1TR9u33MoNxAgdjeC4z7c4jNfKUZ9U",
+        authDomain: "lexfaflagmex.firebaseapp.com",
+        databaseURL: "https://lexfaflagmex-default-rtdb.firebaseio.com",
+        projectId: "lexfaflagmex",
+        storageBucket: "lexfaflagmex.firebasestorage.app",
+        messagingSenderId: "410846383205",
+        appId: "1:410846383205:web:2395ef572d8e1e904b4a8c",
+        measurementId: "G-94KJRR53JX"
+        };
+
+        // Inicializar Firebase
+        let db = null;
+        let auth = null;
+        try {
+            if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "") {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                auth = firebase.auth();
+            }
+        } catch (e) {
+            console.error("Error al inicializar Firebase:", e);
+        }
+    </script>
+
+    <style>
+        [x-cloak] { 
+            display: none !important; 
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+            color: #f4f4f5;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(217, 119, 6, 0.06) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .font-greek {
+            font-family: 'Cinzel', serif;
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #d97706 100%);
+        }
+
+        .gold-gradient-hover:hover {
+            background: linear-gradient(135deg, #ffffff 0%, #fbbf24 50%, #b45309 100%);
+        }
+
+        .gold-text {
+            background: linear-gradient(135deg, #fffbeb 0%, #f59e0b 50%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dark-card {
+            background: rgba(18, 18, 22, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 158, 11, 0.22);
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .dark-card:hover {
+            border-color: rgba(245, 158, 11, 0.45);
+            box-shadow: 0 15px 35px -5px rgba(0,0,0,0.9), 0 0 20px rgba(245, 158, 11, 0.15);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+
+        .stat-highlight {
+            background-color: #f59e0b !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
+        }
+
+        .th-offense {
+            background-color: #f59e0b;
+            color: #000000;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+        }
+
+        .th-defense {
+            background-color: #d97706;
+            color: #000000;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+        }
+
+        .contenedor-logo img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            display: block;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+        Alpine.data('olympusHub', () => ({
+            DATA_VERSION: '4.0',
+            currentTab: 'table',
+            selectedTeam: 'Olympus', // Equipo seleccionado por defecto
+            teams: [
+                'Olympus', 'Spartans', 'Titans', 'Valkyries', 
+                'Gladiators', 'Cyclopes', 'Cronos', 'Hades', 
+                'Poseidon', 'Zeus', 'Ares', 'Athena'
+            ],
+            selectedJornada: 'global', 
+            availableJornadas: [1, 2, 3, 4, 5, 6, 7, 'semifinal', 'final'],
+            searchQuery: '',
+            showSuccessToast: false,
+            copied: false,
+            selectedPlayer: null,
+            
+            // Roster base por equipo (puedes personalizarlo o mantener un roster estándar de jugadores por equipo)
+            roster: [
+                { num: '2', name: 'Jugador 1', god: 'Ofensiva' },
+                { num: '3', name: 'Jugador 2', god: 'Defensa' },
+                { num: '4', name: 'Jugador 3', god: 'QB' },
+                // ... puedes adaptar los jugadores de cada equipo
+            ],
+
+            // Estructura de datos organizada por equipo y jornada/fase
+            jornadasData: {
+                'Olympus': {
+                    1: [
+                        { num: '2', passLanzados: '2 de 2', ratingQB: 100.0, pasesTD: 0, td: 1, recepcion: 1, pasesTirados: 0, intercepcion: 0, empepinada: 0, apresuramientoQB: 0, sacks: 0, tacleada: 0 },
+                        // ... estadísticas de la jornada 1 para Olympus
+                    ],
+                    // Jornadas 2 a 7, semifinal y final se inicializan igual
+                },
+                'Spartans': {
+                    1: [] // Estadísticas para Spartans
+                }
+                // ... así para los 12 equipos
+            },
+
+            init() {
+                if (auth) {
+                    auth.onAuthStateChanged((user) => {
+                        this.isLoggedIn = !!user;
+                    });
+                }
+
+                if (db) {
+                    db.ref('lexfa_stats').on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            if (data.jornadasData) this.jornadasData = data.jornadasData;
+                            if (data.teams) this.teams = data.teams;
+                        } else {
+                            this.saveToFirebase(false);
+                        }
+                    });
+                }
+            },
+
+            // Guardar cambios en la base de datos de la liga
+            saveToFirebase(showToast = true) {
+                if (db) {
+                    db.ref('lexfa_stats').set({
+                        jornadasData: this.jornadasData,
+                        teams: this.teams
+                    }).then(() => {
+                        if (showToast) {
+                            this.showSuccessToast = true;
+                            setTimeout(() => { this.showSuccessToast = false; }, 3000);
+                        }
+                    }).catch((error) => {
+                        console.error("Error al guardar en Firebase:", error);
+                        alert("Permiso denegado. Inicia sesión como administrador/coach.");
+                    });
+                }
+            },
+
+            // Obtener jugadores del equipo seleccionado filtrando jornadas o acumulado global
+            get currentPlayers() {
+                const teamJornadas = this.jornadasData[this.selectedTeam] || {};
+                
+                if (this.selectedJornada === 'global') {
+                    // Lógica para acumular todas las jornadas (1-7 + playoffs) del equipo seleccionado
+                    return this.roster.map(rPlayer => {
+                        let agg = { ...rPlayer, passLanzados: 0, ratingQB: 0, pasesTD: 0, td: 0, recepcion: 0, pasesTirados: 0, intercepcion: 0, empepinada: 0, apresuramientoQB: 0, sacks: 0, tacleada: 0 };
+                        
+                        this.availableJornadas.forEach(jKey => {
+                            const list = teamJornadas[jKey] || [];
+                            const pData = list.find(p => String(p.num) === String(rPlayer.num));
+                            if (pData) {
+                                agg.pasesTD += Number(pData.pasesTD || 0);
+                                agg.td += Number(pData.td || 0);
+                                agg.recepcion += Number(pData.recepcion || 0);
+                                agg.intercepcion += Number(pData.intercepcion || 0);
+                                agg.sacks += Number(pData.sacks || 0);
+                                agg.tacleada += Number(pData.tacleada || 0);
+                            }
+                        });
+                        return agg;
+                    });
+                } else {
+                    const list = teamJornadas[this.selectedJornada] || [];
+                    return this.roster.map(rPlayer => {
+                        const pData = list.find(p => String(p.num) === String(rPlayer.num)) || {};
+                        return {
+                            num: rPlayer.num,
+                            name: rPlayer.name,
+                            god: rPlayer.god,
+                            passLanzados: pData.passLanzados || 0,
+                            ratingQB: pData.ratingQB || 0,
+                            pasesTD: Number(pData.pasesTD || 0),
+                            td: Number(pData.td || 0),
+                            recepcion: Number(pData.recepcion || 0),
+                            pasesTirados: Number(pData.pasesTirados || 0),
+                            intercepcion: Number(pData.intercepcion || 0),
+                            empepinada: Number(pData.empepinada || 0),
+                            apresuramientoQB: Number(pData.apresuramientoQB || 0),
+                            sacks: Number(pData.sacks || 0),
+                            tacleada: Number(pData.tacleada || 0)
+                        };
+                    });
+                }
+            }
+        }));
+    });
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-black" x-data="olympusHub">
+
+    <!-- Selector de Equipos -->
+    <div class="flex items-center gap-2">
+        <span class="text-xs text-amber-400 font-bold uppercase tracking-wider hidden sm:inline font-greek">
+            <i class="fa-solid fa-shield mr-1"></i> Equipo:
+        </span>
+        <select x-model="selectedTeam" class="bg-zinc-900 border border-amber-500/50 text-amber-300 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-inner">
+            <template x-for="t in teams" :key="t">
+                <option :value="t" x-text="t" class="bg-zinc-900 text-white"></option>
+            </template>
+        </select>
+    </div>
+
+    <!-- Selector de Jornada / Playoffs -->
+    <div class="flex items-center gap-2">
+        <span class="text-xs text-amber-400 font-bold uppercase tracking-wider hidden sm:inline font-greek">
+            <i class="fa-solid fa-calendar-days mr-1"></i> Fase:
+        </span>
+        <select x-model="selectedJornada" class="bg-zinc-900 border border-amber-500/50 text-amber-300 text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-inner">
+            <option value="global" class="bg-zinc-900 text-amber-400 font-bold">⭐ Global (Temporada)</option>
+            <hr class="border-zinc-800">
+            <template x-for="j in availableJornadas" :key="j">
+                <option :value="String(j)" x-text="isNaN(j) ? j.toUpperCase() : 'Jornada ' + j" class="bg-zinc-900 text-white"></option>
+            </template>
+        </select>
+    </div>
+
+    <!-- Notificación Flotante (Toast) -->
+    <div x-show="showSuccessToast" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" class="fixed bottom-5 right-5 z-50 bg-amber-500 text-black font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 border border-amber-300">
+        <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+        <span>¡Estadísticas guardadas y sincronizadas en la nube!</span>
+    </div>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
+        
+        <!-- Pestañas de Navegación -->
+        <div class="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 mb-6 overflow-x-auto">
+            <div class="flex items-center gap-2">
+                <button @click="currentTab = 'table'" :class="currentTab === 'table' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-table-list"></i> Tabla General
+                </button>
+                <button @click="currentTab = 'mvp'" :class="currentTab === 'mvp' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-trophy"></i> Cuadro de Honor
+                </button>
+                <button @click="currentTab = 'cards'" :class="currentTab === 'cards' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-users"></i> Tarjetas Dioses
+                </button>
+                <button @click="currentTab = 'edit'" :class="currentTab === 'edit' ? 'gold-gradient text-black font-extrabold shadow-amber-500/20' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-pen-to-square"></i> Cargar / Editar Datos
+                </button>
+            </div>
+
+            <!-- Botón WhatsApp -->
+            <button @click="copyWhatsAppText()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-900/40 shrink-0">
+                <i class="fa-brands fa-whatsapp text-lg"></i>
+                <span x-text="copied ? '¡Copiado!' : 'Reporte WhatsApp'"></span>
+            </button>
+        </div>
+
+        <!-- Búsqueda -->
+        <div class="mb-4">
+            <div class="relative max-w-md">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm"></i>
+                <input type="text" x-model="searchQuery" placeholder="Buscar por jugador, número o dios..." class="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500 transition">
+            </div>
+        </div>
+
+        <!-- VISTA 1: TABLA GENERAL -->
+        <div x-show="currentTab === 'table'" x-transition class="space-y-4">
+            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl border border-amber-500/20">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left text-zinc-300">
+                        <thead>
+                            <tr class="text-center font-greek text-[11px] uppercase border-b border-amber-500/30">
+                                <th colspan="3" class="py-2.5 bg-zinc-950 text-amber-400 border-r border-zinc-800">Jugador</th>
+                                <th colspan="6" class="py-2.5 th-offense border-r border-amber-600/40">Ofensa</th>
+                                <th colspan="5" class="py-2.5 th-defense">Defensa</th>
+                            </tr>
+                            <tr class="bg-zinc-900/90 text-zinc-400 text-[10px] uppercase border-b border-zinc-800 text-center font-bold">
+                                <th class="py-2 px-3 text-left">#</th>
+                                <th class="py-2 px-3 text-left">Nombre</th>
+                                <th class="py-2 px-3 text-left border-r border-zinc-800">Dios</th>
+                                <th class="py-2 px-2 bg-amber-500/10 text-amber-300">Pases Lanzados</th>
+                                <th class="py-2 px-2 bg-amber-500/10 text-amber-300">Rating QB</th>
+                                <th class="py-2 px-2 bg-amber-500/10 text-amber-300">Pass TD</th>
+                                <th class="py-2 px-2 bg-amber-500/10 text-amber-300">TD</th>
+                                <th class="py-2 px-2 bg-amber-500/10 text-amber-300">Recepciones</th>
+                                <th class="py-2 px-2 bg-amber-500/10 text-amber-300 border-r border-zinc-800">Pases Tirados</th>
+                                <th class="py-2 px-2 bg-amber-600/10 text-amber-400">Intercepciones</th>
+                                <th class="py-2 px-2 bg-amber-600/10 text-amber-400">Empepinadas</th>
+                                <th class="py-2 px-2 bg-amber-600/10 text-amber-400">Apres. QB</th>
+                                <th class="py-2 px-2 bg-amber-600/10 text-amber-400">Sacks</th>
+                                <th class="py-2 px-2 bg-amber-600/10 text-amber-400">Tacleada</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-800/60 font-medium">
+                            <template x-for="p in filteredPlayers" :key="p.num">
+                                <tr class="hover:bg-amber-500/5 transition">
+                                    <td class="py-2.5 px-3 font-extrabold text-amber-400" x-text="'#' + p.num"></td>
+                                    <td class="py-2.5 px-3 font-bold text-white" x-text="p.name"></td>
+                                    <td class="py-2.5 px-3 text-zinc-400 border-r border-zinc-800/60" x-text="p.god"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="hasValue(p.passLanzados) ? 'stat-highlight' : ''" x-text="p.passLanzados || '-'"></td>
+                                    <td class="py-2.5 px-2 text-center font-bold text-amber-300" x-text="formatRating(p.ratingQB)"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.pasesTD > 0 ? 'stat-highlight' : ''" x-text="p.pasesTD || 0"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.td > 0 ? 'stat-highlight' : ''" x-text="p.td || 0"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.recepcion > 0 ? 'stat-highlight' : ''" x-text="p.recepcion || 0"></td>
+                                    <td class="py-2.5 px-2 text-center border-r border-zinc-800/60" :class="p.pasesTirados > 0 ? 'stat-highlight' : ''" x-text="p.pasesTirados || 0"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.intercepcion > 0 ? 'stat-highlight' : ''" x-text="p.intercepcion || 0"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.empepinada > 0 ? 'stat-highlight' : ''" x-text="p.empepinada || 0"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.apresuramientoQB > 0 ? 'stat-highlight' : ''" x-text="p.apresuramientoQB || 0"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.sacks > 0 ? 'stat-highlight' : ''" x-text="p.sacks || 0"></td>
+                                    <td class="py-2.5 px-2 text-center" :class="p.tacleada > 0 ? 'stat-highlight' : ''" x-text="p.tacleada || 0"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTA 2: CUADRO DE HONOR (MVPs) -->
+        <div x-show="currentTab === 'mvp'" x-transition class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="dark-card p-6 rounded-2xl border border-amber-500/40 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-amber-500 text-black font-black text-xs px-3 py-1 rounded-bl-xl uppercase font-greek">Líder de Pase</div>
+                <div class="text-4xl mb-2">🏈</div>
+                <h3 class="font-greek font-extrabold text-xl text-white mb-1" x-text="mvps.passer.name || 'N/A'"></h3>
+                <p class="text-xs text-amber-400 font-bold mb-4" x-text="'#' + (mvps.passer.num || '-') + ' • ' + (mvps.passer.god || '-')"></p>
+                <div class="space-y-2 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800 text-xs">
+                    <div class="flex justify-between"><span class="text-zinc-400">Pases Lanzados:</span> <span class="font-bold text-white" x-text="mvps.passer.passLanzados || 0"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Pases de TD:</span> <span class="font-extrabold text-amber-400" x-text="mvps.passer.pasesTD || 0"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Rating QB:</span> <span class="font-extrabold text-amber-300" x-text="formatRating(mvps.passer.ratingQB)"></span></div>
+                </div>
+            </div>
+
+            <div class="dark-card p-6 rounded-2xl border border-amber-500/40 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-amber-500 text-black font-black text-xs px-3 py-1 rounded-bl-xl uppercase font-greek">Anotador Principal</div>
+                <div class="text-4xl mb-2">🎯</div>
+                <h3 class="font-greek font-extrabold text-xl text-white mb-1" x-text="mvps.scorer.name || 'N/A'"></h3>
+                <p class="text-xs text-amber-400 font-bold mb-4" x-text="'#' + (mvps.scorer.num || '-') + ' • ' + (mvps.scorer.god || '-')"></p>
+                <div class="space-y-2 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800 text-xs">
+                    <div class="flex justify-between"><span class="text-zinc-400">Touchdowns (TD):</span> <span class="font-extrabold text-amber-400" x-text="mvps.scorer.td || 0"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Recepciones:</span> <span class="font-bold text-white" x-text="mvps.scorer.recepcion || 0"></span></div>
+                </div>
+            </div>
+
+            <div class="dark-card p-6 rounded-2xl border border-amber-500/40 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-amber-500 text-black font-black text-xs px-3 py-1 rounded-bl-xl uppercase font-greek">Muralla Defensiva</div>
+                <div class="text-4xl mb-2">🛡️</div>
+                <h3 class="font-greek font-extrabold text-xl text-white mb-1" x-text="mvps.defender.name || 'N/A'"></h3>
+                <p class="text-xs text-amber-400 font-bold mb-4" x-text="'#' + (mvps.defender.num || '-') + ' • ' + (mvps.defender.god || '-')"></p>
+                <div class="space-y-2 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800 text-xs">
+                    <div class="flex justify-between"><span class="text-purple-400 font-bold">Intercepciones (INT):</span> <span class="font-extrabold text-purple-400" x-text="mvps.defender.intercepcion || 0"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Sacks:</span> <span class="font-extrabold text-amber-400" x-text="mvps.defender.sacks || 0"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Tackles:</span> <span class="font-bold text-white" x-text="mvps.defender.tacleada || 0"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Apresuramientos QB:</span> <span class="font-bold text-white" x-text="mvps.defender.apresuramientoQB || 0"></span></div>
+                </div>
+            </div>
+        </div>
+        
+    <!-- VISTA 3: TARJETA DIOSES -->
+        <div x-show="currentTab === 'cards'" class="space-y-6" x-transition>
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-950 p-4 rounded-2xl border border-zinc-800">
+                <div>
+                    <h3 class="font-greek text-xl font-bold text-amber-400">ROSTER TEAM OLYMPUS</h3>
+                    <p class="text-xs text-zinc-400">Haz clic en la tarjeta de un jugador para ver su reporte detallado</p>
+                </div>
+                <input type="text" x-model="searchQuery" placeholder="Buscar dios o jugador..." class="bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 rounded-xl px-4 py-2 w-full sm:w-64 focus:outline-none focus:border-amber-500">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <template x-for="p in filteredPlayers" :key="p.num">
+                    <div class="dark-card rounded-2xl p-5 hover:border-amber-500 transition-all duration-200 cursor-pointer relative overflow-hidden group" @click="selectedPlayer = p">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-mono font-extrabold text-amber-400 text-base group-hover:bg-amber-500 group-hover:text-black transition-colors" x-text="'#' + p.num"></span>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-zinc-800/80 border border-zinc-700 text-zinc-300 font-greek font-bold" x-text="p.god"></span>
+                        </div>
+                        <h4 class="font-black text-lg text-white mb-2 group-hover:text-amber-300 transition-colors" x-text="p.name"></h4>
+                        <div class="flex flex-wrap gap-1.5 text-[11px]">
+                            <template x-if="hasValue(p.passLanzados)">
+                                <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/30 font-semibold" x-text="'Pass: ' + p.passLanzados"></span>
+                            </template>
+                            <template x-if="hasValue(p.ratingQB)">
+                                <span class="bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-md border border-yellow-500/30 font-semibold" x-text="'Rating QB: ' + formatRating(p.ratingQB)"></span>
+                            </template>
+                            <template x-if="hasValue(p.pasesTD)">
+                                <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/30 font-semibold" x-text="'Pases TD: ' + p.pasesTD"></span>
+                            </template>
+                            <template x-if="hasValue(p.td)">
+                                <span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/30 font-semibold" x-text="'TD: ' + p.td"></span>
+                            </template>
+                            <template x-if="hasValue(p.recepcion)">
+                                <span class="bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded-md border border-teal-500/30 font-semibold" x-text="'Rec: ' + p.recepcion"></span>
+                            </template>
+                            <template x-if="hasValue(p.pasesTirados)">
+                                <span class="bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md border border-zinc-700 font-semibold" x-text="'P. Tirados: ' + p.pasesTirados"></span>
+                            </template>
+                            <template x-if="hasValue(p.intercepcion)">
+                                <span class="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-md border border-purple-500/30 font-semibold" x-text="'INT: ' + p.intercepcion"></span>
+                            </template>
+                            <template x-if="hasValue(p.empepinada)">
+                                <span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30 font-semibold" x-text="'Empepinada: ' + p.empepinada"></span>
+                            </template>
+                            <template x-if="hasValue(p.apresuramientoQB)">
+                                <span class="bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-md border border-orange-500/30 font-semibold" x-text="'Apres. QB: ' + p.apresuramientoQB"></span>
+                            </template>
+                            <template x-if="hasValue(p.sacks)">
+                                <span class="bg-red-500/20 text-red-300 px-2 py-0.5 rounded-md border border-red-500/30 font-semibold" x-text="'Sacks: ' + p.sacks"></span>
+                            </template>
+                            <template x-if="hasValue(p.tacleada)">
+                                <span class="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-md border border-blue-500/30 font-semibold" x-text="'Tackles: ' + p.tacleada"></span>
+                            </template>
+                            <template x-if="!hasAnyStat(p)">
+                                <span class="text-zinc-500 italic text-xs py-0.5">Sin registros</span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- VISTA 3: CARGAR / EDITAR DATOS -->
+        <div x-show="currentTab === 'edit'" x-transition class="space-y-4">
+            <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+                <h2 class="font-greek text-lg font-bold text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-sm"></i> Captura de Datos (Requiere Sesión de Coach)
+                </h2>
+                
+                <template x-if="!isLoggedIn">
+                    <button @click="showLoginModal = true" class="bg-amber-500 text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition flex items-center gap-2">
+                        <i class="fa-solid fa-lock"></i> Iniciar Sesión para Editar
+                    </button>
+                </template>
+                <template x-if="isLoggedIn">
+                    <button @click="guardarCambiosCoach()" class="gold-gradient text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 transition flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Cambios en la Nube
+                    </button>
+                </template>
+            </div>
+
+            <!-- Aviso si no está logueado -->
+            <template x-if="!isLoggedIn">
+                <div class="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl text-amber-300 text-xs sm:text-sm flex items-center gap-3">
+                    <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                    <span>Para modificar estadísticas o agregar jornadas, debes iniciar sesión con tu cuenta de Coach autorizada.</span>
+                </div>
+            </template>
+
+            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl border border-amber-500/20">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left text-zinc-300">
+                        <thead>
+                            <tr class="bg-zinc-900/90 text-zinc-400 text-[10px] uppercase border-b border-zinc-800 text-center font-bold">
+                                <th class="py-2 px-3 text-left">#</th>
+                                <th class="py-2 px-3 text-left">Jugador</th>
+                                <th class="py-2 px-2">Pases (Comp / Tot)</th>
+                                <th class="py-2 px-2">Pases TD</th>
+                                <th class="py-2 px-2">TD</th>
+                                <th class="py-2 px-2">Rec</th>
+                                <th class="py-2 px-2">Pases Tirados</th>
+                                <th class="py-2 px-2">INT</th>
+                                <th class="py-2 px-2">Empepinada</th>
+                                <th class="py-2 px-2">Apres. QB</th>
+                                <th class="py-2 px-2">Sacks</th>
+                                <th class="py-2 px-2">Tacleada</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-800/60">
+                            <template x-for="p in (jornadasData[selectedJornada] || [])" :key="p.num">
+                                <tr class="hover:bg-zinc-900/40">
+                                    <td class="py-2 px-3 font-extrabold text-amber-400" x-text="'#' + p.num"></td>
+                                    <td class="py-2 px-3 font-bold text-white" x-text="roster.find(r => String(r.num) === String(p.num))?.name || ''"></td>
+                                    
+                                    <td class="py-2 px-2">
+                                        <div class="flex flex-col gap-1 items-center justify-center min-w-[130px]">
+                                            <div class="flex items-center gap-1">
+                                                <span class="text-[9px] text-amber-400 font-bold uppercase w-8 text-right">Comp:</span>
+                                                <button @click="decComp(p)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-white font-black text-xs flex items-center justify-center border border-zinc-700">-</button>
+                                                <span class="w-6 text-center font-bold text-white text-xs" x-text="getComp(p)"></span>
+                                                <button @click="incComp(p)" class="w-6 h-6 rounded bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center justify-center">+</button>
+                                            </div>
+                                            <div class="flex items-center gap-1">
+                                                <span class="text-[9px] text-zinc-400 font-bold uppercase w-8 text-right">Tot:</span>
+                                                <button @click="decAtt(p)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-white font-black text-xs flex items-center justify-center border border-zinc-700">-</button>
+                                                <span class="w-6 text-center font-bold text-zinc-300 text-xs" x-text="getAtt(p)"></span>
+                                                <button @click="incAtt(p)" class="w-6 h-6 rounded bg-zinc-700 hover:bg-zinc-600 text-white font-black text-xs flex items-center justify-center">+</button>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-amber-300 mt-0.5" x-text="'Rating: ' + calcRatingQB(p.passLanzados)"></span>
+                                        </div>
+                                    </td>
+
+                                    <template x-for="field in ['pasesTD', 'td', 'recepcion', 'pasesTirados', 'intercepcion', 'empepinada', 'apresuramientoQB', 'sacks', 'tacleada']">
+                                        <td class="py-2 px-1 text-center">
+                                            <div class="flex items-center justify-center gap-1">
+                                                <button @click="dec(p, field)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs border border-zinc-700">-</button>
+                                                <input type="number" x-model.number="p[field]" min="0" class="w-10 bg-zinc-950 border border-zinc-800 rounded text-center py-1 text-xs text-white font-bold focus:outline-none focus:border-amber-500">
+                                                <button @click="inc(p, field)" class="w-6 h-6 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-xs border border-amber-500/40">+</button>
+                                            </div>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL DE INICIO DE SESIÓN PARA COACH -->
+    <div x-show="showLoginModal" 
+        x-transition:enter="transition ease-out duration-200" 
+        x-transition:enter-start="opacity-0" 
+        x-transition:enter-end="opacity-100" 
+        x-transition:leave="transition ease-in duration-150" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" 
+        @click.self="showLoginModal = false" 
+        x-cloak>
+        
+        <div class="dark-card rounded-2xl max-w-sm w-full p-6 relative border border-amber-500/40 shadow-2xl" @click.stop>
+            <button @click="showLoginModal = false" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3 text-amber-400 text-xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-greek font-black text-xl text-white">ACCESO DE COACH</h3>
+                <p class="text-xs text-zinc-400 mt-1">Ingresa tus credenciales para editar registros</p>
+            </div>
+
+            <form @submit.prevent="loginCoach()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-amber-400 mb-1 uppercase tracking-wider">Correo Electrónico</label>
+                    <input type="email" x-model="coachEmail" required placeholder="coach@olympus.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-amber-400 mb-1 uppercase tracking-wider">Contraseña</label>
+                    <input type="password" x-model="coachPassword" required placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+
+                <template x-if="loginError">
+                    <p class="text-xs text-red-400 font-bold text-center" x-text="loginError"></p>
+                </template>
+
+                <button type="submit" class="w-full gold-gradient text-black font-extrabold text-xs py-3 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition">
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL FICHA DETALLADA DE JUGADOR -->
+    <div x-show="selectedPlayer !== null" 
+        x-transition:enter="transition ease-out duration-200" 
+        x-transition:enter-start="opacity-0" 
+        x-transition:enter-end="opacity-100" 
+        x-transition:leave="transition ease-in duration-150" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" 
+        @click.self="selectedPlayer = null" 
+        x-cloak>
+        
+        <div class="dark-card rounded-2xl max-w-md w-full p-6 relative border border-amber-500/40 shadow-2xl" @click.stop>
+            <button @click="selectedPlayer = null" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-4 mb-6 border-b border-zinc-800 pb-4">
+                <span class="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center font-mono font-black text-black text-2xl shadow-lg shadow-amber-500/20" x-text="'#' + selectedPlayer?.num"></span>
+                <div>
+                    <h3 class="font-black text-2xl text-white" x-text="selectedPlayer?.name"></h3>
+                    <p class="text-xs text-amber-400 font-greek font-bold uppercase tracking-widest" x-text="'Dios: ' + selectedPlayer?.god"></p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-[11px] font-bold font-greek uppercase text-amber-400 mb-2 flex items-center gap-1.5 border-b border-amber-500/20 pb-1">
+                        <i class="fa-solid fa-football"></i> Estadísticas de Ofensa
+                    </h4>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Pases:</span>
+                            <span class="font-bold text-white" x-text="selectedPlayer?.passLanzados || '0'"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Rating QB:</span>
+                            <span class="font-bold text-amber-300" x-text="formatRating(selectedPlayer?.ratingQB)"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Pases TD:</span>
+                            <span class="font-bold text-amber-400" x-text="selectedPlayer?.pasesTD || 0"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Touchdowns:</span>
+                            <span class="font-bold text-emerald-400" x-text="selectedPlayer?.td || 0"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Recepciones:</span>
+                            <span class="font-bold text-teal-400" x-text="selectedPlayer?.recepcion || 0"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">P. Tirados:</span>
+                            <span class="font-bold text-zinc-300" x-text="selectedPlayer?.pasesTirados || 0"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-[11px] font-bold font-greek uppercase text-amber-400 mb-2 flex items-center gap-1.5 border-b border-amber-500/20 pb-1">
+                        <i class="fa-solid fa-shield-halved"></i> Estadísticas de Defensa
+                    </h4>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">INTs:</span>
+                            <span class="font-bold text-purple-400" x-text="selectedPlayer?.intercepcion || 0"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Empepinadas:</span>
+                            <span class="font-bold text-indigo-400" x-text="selectedPlayer?.empepinada || 0"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Apres. QB:</span>
+                            <span class="font-bold text-orange-400" x-text="selectedPlayer?.apresuramientoQB || 0"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between">
+                            <span class="text-zinc-400">Sacks:</span>
+                            <span class="font-bold text-red-400" x-text="selectedPlayer?.sacks || 0"></span>
+                        </div>
+                        <div class="bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80 flex justify-between col-span-2">
+                            <span class="text-zinc-400">Tackles:</span>
+                            <span class="font-bold text-blue-400" x-text="selectedPlayer?.tacleada || 0"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-3 border-t border-zinc-800 flex justify-end">
+                <button @click="selectedPlayer = null" class="gold-gradient text-black font-extrabold text-xs px-5 py-2 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition">
+                    Cerrar Ficha
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-zinc-800/80 bg-zinc-950 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-xs text-zinc-500 font-medium">
+                © 2026 <span class="text-amber-400 font-bold font-greek">Flag Statistics</span> • TochoStatsMarHub
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
