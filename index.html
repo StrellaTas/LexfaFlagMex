@@ -114,7 +114,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '17.0',
+                DATA_VERSION: '18.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 
@@ -129,7 +129,7 @@
 
                 selectedTeam: 'Olympus',
                 selectedJornada: 'global',
-                availableJornadas: [1, 2, 3, 4, 5, 6, 7, 8, 'semifinal', 'final'],
+                availableJornadas: ['1', '2', '3', '4', '5', '6', '7', '8', 'semifinal', 'final'],
                 searchQuery: '',
                 showSuccessToast: false,
                 copied: false,
@@ -147,6 +147,7 @@
                     'Mixto': []
                 },
 
+                // DATOS CÉDULA DE JUEGO (CAMPOS DESPLEGABLES Y VACÍOS)
                 cedula: {
                     jornada: '1',
                     fecha: new Date().toISOString().split('T')[0],
@@ -159,6 +160,17 @@
                     obsReferees: ''
                 },
 
+                // FORMULARIO DINÁMICO DE ANOTACIONES (PLAY BY PLAY)
+                nuevaAnotacion: {
+                    equipo: '',
+                    numPass: '',  // QB que dio el pase
+                    numScore: '', // Jugador que anotó
+                    ptsTD: 6,     // Valor del TD
+                    ptsExtra: 0   // Puntos extra (0, 1, 2, 3)
+                },
+
+                anotacionesRegistradas: [],
+
                 newPlayerNum: '',
                 newPlayerName: '',
                 newPlayerPos: '',
@@ -167,6 +179,77 @@
                     'Varonil': {},
                     'Femenil': {},
                     'Mixto': {}
+                },
+
+                // OBTENER ROSTER DEL EQUIPO SELECCIONADO PARA LA ANOTACIÓN
+                get rosterEquipoAnotador() {
+                    if (!this.nuevaAnotacion.equipo) return [];
+                    const catData = this.teamsData[this.selectedCategory] || {};
+                    const teamObj = catData[this.nuevaAnotacion.equipo];
+                    return (teamObj && teamObj.roster) ? teamObj.roster : [];
+                },
+
+                // AGREGAR ANOTACIÓN AL PARTIDO Y ACTUALIZAR ESTADÍSTICAS Y MARCADOR
+                agregarAnotacion() {
+                    if (!this.nuevaAnotacion.equipo) {
+                        alert("Selecciona el equipo que realizó la anotación.");
+                        return;
+                    }
+                    if (!this.nuevaAnotacion.numScore) {
+                        alert("Selecciona o ingresa el número del jugador que anotó.");
+                        return;
+                    }
+
+                    const eq = this.nuevaAnotacion.equipo;
+                    const totalPts = Number(this.nuevaAnotacion.ptsTD || 0) + Number(this.nuevaAnotacion.ptsExtra || 0);
+
+                    // Actualizar marcador automático según si es local o visita
+                    if (eq === this.cedula.equipoLocal) {
+                        this.cedula.marcadorLocal = Number(this.cedula.marcadorLocal || 0) + totalPts;
+                    } else if (eq === this.cedula.equipoVisita) {
+                        this.cedula.marcadorVisita = Number(this.cedula.marcadorVisita || 0) + totalPts;
+                    }
+
+                    // Registrar en la lista
+                    this.anotacionesRegistradas.push({
+                        equipo: eq,
+                        numPass: this.nuevaAnotacion.numPass || 'N/A',
+                        numScore: this.nuevaAnotacion.numScore,
+                        ptsTD: Number(this.nuevaAnotacion.ptsTD),
+                        ptsExtra: Number(this.nuevaAnotacion.ptsExtra),
+                        totalPts: totalPts
+                    });
+
+                    // Cargar estadísticas individuales en el equipo correspondiente
+                    this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numScore, 'td', 1);
+                    if (this.nuevaAnotacion.ptsExtra > 0) {
+                        this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numScore, 'extra', Number(this.nuevaAnotacion.ptsExtra));
+                    }
+                    if (this.nuevaAnotacion.numPass && this.nuevaAnotacion.numPass !== 'N/A') {
+                        this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numPass, 'pasesTD', 1);
+                    }
+
+                    // Limpiar formulario de anotación
+                    this.nuevaAnotacion.numPass = '';
+                    this.nuevaAnotacion.numScore = '';
+                    this.nuevaAnotacion.ptsTD = 6;
+                    this.nuevaAnotacion.ptsExtra = 0;
+                },
+
+                incrementarEstadisticaJugador(equipo, num, statKey, cantidad = 1) {
+                    const jKey = this.cedula.jornada;
+                    if (!this.teamsData[this.selectedCategory]) this.teamsData[this.selectedCategory] = {};
+                    if (!this.teamsData[this.selectedCategory][equipo]) this.teamsData[this.selectedCategory][equipo] = { roster: [], jornadas: {} };
+                    if (!this.teamsData[this.selectedCategory][equipo].jornadas) this.teamsData[this.selectedCategory][equipo].jornadas = {};
+                    if (!this.teamsData[this.selectedCategory][equipo].jornadas[jKey]) this.teamsData[this.selectedCategory][equipo].jornadas[jKey] = [];
+
+                    const list = this.teamsData[this.selectedCategory][equipo].jornadas[jKey];
+                    let pData = list.find(p => String(p.num) === String(num));
+                    if (!pData) {
+                        pData = { num: String(num), pasesTD: 0, td: 0, extra: 0, intercepcion: 0, sacks: 0 };
+                        list.push(pData);
+                    }
+                    pData[statKey] = Number(pData[statKey] || 0) + cantidad;
                 },
 
                 get standingsTable() {
@@ -277,7 +360,6 @@
                     return this.teamsData[this.selectedCategory][this.selectedTeam].jornadas;
                 },
 
-                // CONECTADO DIRECTAMENTE A LA JORNADA DE LA CÉDULA
                 get cedulaEditablePlayers() {
                     const jKey = this.cedula.jornada;
                     if (!jKey) return [];
@@ -469,7 +551,12 @@
                     if (!this.isLoggedIn) { this.showLoginModal = true; return; }
                     
                     if (!this.cedula.equipoLocal || !this.cedula.equipoVisita) {
-                        alert("Debes indicar el equipo Local y Visita.");
+                        alert("Debes seleccionar el Equipo Local y Visita.");
+                        return;
+                    }
+
+                    if (this.cedula.equipoLocal === this.cedula.equipoVisita) {
+                        alert("El equipo local y visita no pueden ser el mismo.");
                         return;
                     }
 
@@ -485,26 +572,11 @@
                         marcadorLocal: Number(this.cedula.marcadorLocal || 0),
                         equipoVisita: this.cedula.equipoVisita,
                         marcadorVisita: Number(this.cedula.marcadorVisita || 0),
-                        obsReferees: this.cedula.obsReferees
+                        obsReferees: this.cedula.obsReferees,
+                        anotaciones: this.anotacionesRegistradas
                     });
 
                     this.saveToFirebase(true);
-                },
-
-                copyWhatsAppText() {
-                    const text = this.whatsappText;
-                    if (navigator.clipboard && window.isSecureContext) {
-                        navigator.clipboard.writeText(text);
-                    } else {
-                        const textArea = document.createElement("textarea");
-                        textArea.value = text;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        try { document.execCommand('copy'); } catch (err) {}
-                        document.body.removeChild(textArea);
-                    }
-                    this.copied = true;
-                    setTimeout(() => { this.copied = false; }, 3000);
                 }
             }));
         });
@@ -962,7 +1034,9 @@
             </div>
         </div>
 
-        <!-- CÉDULA DE JUEGO / ADMIN -->
+        <!-- ========================================================= -->
+        <!-- CÉDULA DE JUEGO MEJORADA (LISTAS DESPLEGABLES Y CARGA DINÁMICA) -->
+        <!-- ========================================================= -->
         <div x-show="currentTab === 'edit'" x-transition class="space-y-8">
             <div class="light-card p-6 rounded-3xl border border-slate-300 shadow-md space-y-6">
                 
@@ -973,21 +1047,27 @@
                         </div>
                         <div>
                             <h2 class="font-brand font-black text-xl text-slate-900">CÉDULA DE JUEGO DIGITAL</h2>
-                            <p class="text-xs text-slate-500">Captura la cédula oficial emitida por los árbitros al finalizar el partido.</p>
+                            <p class="text-xs text-slate-500">Captura dinámica de partidos por listas desplegables.</p>
                         </div>
                     </div>
 
                     <template x-if="isLoggedIn">
                         <button @click="saveCedulaAndMatch()" class="theme-gradient text-white font-extrabold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-md hover:scale-105 transition flex items-center gap-2">
-                            <i class="fa-solid fa-cloud-arrow-up text-base"></i> Guardar Cédula y Marcador en Firebase
+                            <i class="fa-solid fa-cloud-arrow-up text-base"></i> Guardar Cédula en Firebase
                         </button>
                     </template>
                 </div>
 
+                <!-- ENCABEZADO CÉDULA CON JORNADAS Y CATEGORÍAS -->
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
                     <div>
-                        <label class="block font-bold text-slate-600 mb-1">Jornada #</label>
-                        <input type="text" x-model="cedula.jornada" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-slate-900">
+                        <label class="block font-bold text-slate-600 mb-1">Jornada</label>
+                        <!-- LISTA DESPLEGABLE DE JORNADAS -->
+                        <select x-model="cedula.jornada" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-slate-900 cursor-pointer">
+                            <template x-for="j in availableJornadas" :key="'jornada-opt-' + j">
+                                <option :value="j" x-text="isNaN(j) ? j.toUpperCase() : 'Jornada ' + j"></option>
+                            </template>
+                        </select>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Fecha</label>
@@ -1007,90 +1087,145 @@
                     </div>
                 </div>
 
-                <!-- TABLA JUGADORES VINCULADA AL ROSTER Y JORNADA DE CÉDULA -->
-                <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm">
-                    <div class="bg-slate-900 text-white px-4 py-2 flex items-center justify-between text-xs font-bold font-brand">
-                        <span>ESTADÍSTICAS INDIVIDUALES DE JUGADORES</span>
-                        <span x-text="'Equipo: ' + selectedTeam + ' (Jornada ' + cedula.jornada + ')'"></span>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left text-slate-800">
-                            <thead>
-                                <tr class="bg-slate-100 text-slate-700 uppercase border-b border-slate-200 text-center font-extrabold text-[10px]">
-                                    <th class="py-3 px-3 text-left"># / Jugador (Roster Oficial)</th>
-                                    <th class="py-3 px-2 text-center w-20">PTD</th>
-                                    <th class="py-3 px-2 text-center w-20">TD</th>
-                                    <th class="py-3 px-2 text-center w-20">PTS / Extra</th>
-                                    <th class="py-3 px-2 text-center w-20">INT</th>
-                                    <th class="py-3 px-2 text-center w-20">SCK</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200 bg-white">
-                                <template x-for="p in cedulaEditablePlayers" :key="p.num">
-                                    <tr class="hover:bg-slate-50">
-                                        <td class="py-2.5 px-3 font-bold text-slate-900 flex items-center gap-2">
-                                            <span class="w-7 h-7 rounded-lg theme-bg-soft theme-text flex items-center justify-center font-mono font-black" x-text="'#' + p.num"></span>
-                                            <span x-text="currentRoster.find(r => String(r.num) === String(p.num))?.name || 'Jugador no asignado'"></span>
-                                        </td>
-                                        <td class="py-2.5 px-2 text-center">
-                                            <input type="number" min="0" x-model.number="p.pasesTD" class="w-14 bg-slate-50 border border-slate-300 rounded-lg text-center py-1 font-bold text-slate-900 focus:outline-none focus:border-blue-500">
-                                        </td>
-                                        <td class="py-2.5 px-2 text-center">
-                                            <input type="number" min="0" x-model.number="p.td" class="w-14 bg-slate-50 border border-slate-300 rounded-lg text-center py-1 font-bold text-slate-900 focus:outline-none focus:border-blue-500">
-                                        </td>
-                                        <td class="py-2.5 px-2 text-center">
-                                            <input type="number" min="0" x-model.number="p.extra" class="w-14 bg-slate-50 border border-slate-300 rounded-lg text-center py-1 font-bold text-slate-900 focus:outline-none focus:border-blue-500">
-                                        </td>
-                                        <td class="py-2.5 px-2 text-center">
-                                            <input type="number" min="0" x-model.number="p.intercepcion" class="w-14 bg-slate-50 border border-slate-300 rounded-lg text-center py-1 font-bold text-slate-900 focus:outline-none focus:border-blue-500">
-                                        </td>
-                                        <td class="py-2.5 px-2 text-center">
-                                            <input type="number" min="0" x-model.number="p.sacks" class="w-14 bg-slate-50 border border-slate-300 rounded-lg text-center py-1 font-bold text-slate-900 focus:outline-none focus:border-blue-500">
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                        <template x-if="currentRoster.length === 0">
-                            <div class="p-8 text-center text-slate-500 text-xs italic bg-slate-50">
-                                Este equipo no tiene jugadores registrados en su Roster. Ve a la pestaña <strong>"Gestión de Rosters"</strong> para agregarlos.
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- MARCADOR -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                        <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
-                            <i class="fa-solid fa-trophy theme-text"></i> Marcador Final del Partido
-                        </h4>
-                        <div class="flex items-center gap-2">
-                            <select x-model="cedula.equipoLocal" class="w-1/2 bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
-                                <option value="">Equipo Local</option>
+                <!-- SECCIÓN MARCADOR CON EQUIPOS EN BLANCO Y LISTAS DESPLEGABLES -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                    <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5 text-xs">
+                        <i class="fa-solid fa-trophy theme-text"></i> Selección de Equipos del Partido
+                    </h4>
+                    <div class="flex items-center gap-3">
+                        <div class="w-1/2">
+                            <label class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Equipo Local</label>
+                            <select x-model="cedula.equipoLocal" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs cursor-pointer shadow-sm">
+                                <option value="">-- Seleccionar Local --</option>
                                 <template x-for="t in currentTeams" :key="'loc-' + t">
                                     <option :value="t" x-text="t"></option>
                                 </template>
                             </select>
-                            <input type="number" x-model.number="cedula.marcadorLocal" class="w-16 bg-white border border-slate-300 rounded-xl px-2 py-1.5 text-center font-black text-lg">
-                            <span class="font-bold text-slate-400">VS</span>
-                            <input type="number" x-model.number="cedula.marcadorVisita" class="w-16 bg-white border border-slate-300 rounded-xl px-2 py-1.5 text-center font-black text-lg">
-                            <select x-model="cedula.equipoVisita" class="w-1/2 bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
-                                <option value="">Equipo Visita</option>
+                        </div>
+
+                        <div class="flex flex-col items-center justify-center shrink-0">
+                            <span class="text-xs font-black text-slate-400">VS</span>
+                        </div>
+
+                        <div class="w-1/2">
+                            <label class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Equipo Visita</label>
+                            <select x-model="cedula.equipoVisita" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs cursor-pointer shadow-sm">
+                                <option value="">-- Seleccionar Visita --</option>
                                 <template x-for="t in currentTeams" :key="'vis-' + t">
                                     <option :value="t" x-text="t"></option>
                                 </template>
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-                        <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
-                            <i class="fa-solid fa-gavel theme-text"></i> Observaciones de Árbitros / Referee
-                        </h4>
-                        <textarea x-model="cedula.obsReferees" rows="2" placeholder="Incidencias, amarillas, rojas o notas del referee..." class="w-full bg-white border border-slate-300 rounded-xl p-2 focus:outline-none"></textarea>
+                <!-- MÓDULO DE REGISTRO RÁPIDO DE ANOTACIONES (PLAY BY PLAY) -->
+                <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm bg-white">
+                    <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
+                        <span>CAPTURADOR DE ANOTACIONES (TDs Y CONVERSIONES)</span>
+                        <span class="text-[10px] text-slate-400">Puntaje Automático</span>
                     </div>
+
+                    <div class="p-4 bg-slate-50 border-b border-slate-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end text-xs">
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Equipo que Anotó</label>
+                                <select x-model="nuevaAnotacion.equipo" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="">-- Seleccionar --</option>
+                                    <template x-if="cedula.equipoLocal"><option :value="cedula.equipoLocal" x-text="cedula.equipoLocal + ' (Local)'"></option></template>
+                                    <template x-if="cedula.equipoVisita"><option :value="cedula.equipoVisita" x-text="cedula.equipoVisita + ' (Visita)'"></option></template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1"># QB (Pase TD)</label>
+                                <select x-model="nuevaAnotacion.numPass" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="">Sin Pase (Tierra / INT)</option>
+                                    <template x-for="p in rosterEquipoAnotador" :key="'pass-' + p.num">
+                                        <option :value="p.num" x-text="'#' + p.num + ' - ' + p.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1"># Receptor / Anotó</label>
+                                <select x-model="nuevaAnotacion.numScore" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="">-- Seleccionar --</option>
+                                    <template x-for="p in rosterEquipoAnotador" :key="'score-' + p.num">
+                                        <option :value="p.num" x-text="'#' + p.num + ' - ' + p.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Valor Anotación</label>
+                                <select x-model.number="nuevaAnotacion.ptsTD" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="6">Touchdown (6 Puntos)</option>
+                                    <option value="2">Safety (2 Puntos)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Punto Extra</label>
+                                <select x-model.number="nuevaAnotacion.ptsExtra" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="0">No Aplica / Fallado (0 pts)</option>
+                                    <option value="1">Conversión +1 Punto</option>
+                                    <option value="2">Conversión +2 Puntos</option>
+                                    <option value="3">Conversión +3 Puntos</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 text-right">
+                            <button @click="agregarAnotacion()" class="theme-gradient text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow transition hover:scale-105">
+                                <i class="fa-solid fa-plus mr-1"></i> Registrar Anotación
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- HISTORIAL DE ANOTACIONES DEL PARTIDO -->
+                    <div class="p-4">
+                        <h5 class="text-[11px] font-bold text-slate-500 uppercase mb-2">Anotaciones registradas en esta Cédula:</h5>
+                        <div class="space-y-1.5 max-h-40 overflow-y-auto">
+                            <template x-for="(an, idx) in anotacionesRegistradas" :key="'anotacion-' + idx">
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs flex items-center justify-between">
+                                    <div>
+                                        <strong class="theme-text" x-text="an.equipo"></strong> • 
+                                        <span>Anotó: <strong>#<span x-text="an.numScore"></span></strong></span>
+                                        <span x-show="an.numPass && an.numPass !== 'N/A'"> (Pase de #<span x-text="an.numPass"></span>)</span>
+                                    </div>
+                                    <div class="font-black text-slate-900">
+                                        +<span x-text="an.totalPts"></span> pts
+                                        <span class="text-[10px] text-slate-400 font-normal" x-text="'(TD:' + an.ptsTD + ' + Extra:' + an.ptsExtra + ')'"></span>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="anotacionesRegistradas.length === 0">
+                                <p class="text-slate-400 text-xs italic">Aún no hay anotaciones registradas para este partido.</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MARCADOR FINAL AUTOMÁTICO -->
+                <div class="bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-around text-center shadow">
+                    <div>
+                        <span class="block text-xs uppercase text-slate-400 font-bold" x-text="cedula.equipoLocal || 'Equipo Local'"></span>
+                        <span class="text-3xl font-black theme-text" x-text="cedula.marcadorLocal"></span>
+                    </div>
+                    <div class="font-brand font-black text-lg text-slate-500">MARCADOR FINAL</div>
+                    <div>
+                        <span class="block text-xs uppercase text-slate-400 font-bold" x-text="cedula.equipoVisita || 'Equipo Visita'"></span>
+                        <span class="text-3xl font-black theme-text" x-text="cedula.marcadorVisita"></span>
+                    </div>
+                </div>
+
+                <!-- OBSERVACIONES DEL REFEREE -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                    <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
+                        <i class="fa-solid fa-gavel theme-text"></i> Observaciones de Árbitros / Referee
+                    </h4>
+                    <textarea x-model="cedula.obsReferees" rows="2" placeholder="Incidencias, amarillas, rojas o notas del referee..." class="w-full bg-white border border-slate-300 rounded-xl p-2 focus:outline-none"></textarea>
                 </div>
 
             </div>
