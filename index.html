@@ -114,7 +114,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '16.0',
+                DATA_VERSION: '17.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 
@@ -141,7 +141,6 @@
                 loginError: '',
                 showLoginModal: false,
 
-                // HISTORIAL DE PARTIDOS Y CÉDULAS
                 matchesHistory: {
                     'Varonil': [],
                     'Femenil': [],
@@ -149,9 +148,9 @@
                 },
 
                 cedula: {
-                    jornada: '8',
+                    jornada: '1',
                     fecha: new Date().toISOString().split('T')[0],
-                    campo: 'Campo 2',
+                    campo: 'Campo 1',
                     hora: '08:00',
                     equipoLocal: '',
                     marcadorLocal: 0,
@@ -160,7 +159,6 @@
                     obsReferees: ''
                 },
 
-                // CAMPOS DE ALTA DE JUGADORES (GESTIÓN DE ROSTERS)
                 newPlayerNum: '',
                 newPlayerName: '',
                 newPlayerPos: '',
@@ -171,7 +169,6 @@
                     'Mixto': {}
                 },
 
-                // TABLA DE POSICIONES POR EQUIPOS
                 get standingsTable() {
                     const teams = this.teamsByCategory[this.selectedCategory] || [];
                     const matches = this.matchesHistory[this.selectedCategory] || [];
@@ -280,13 +277,15 @@
                     return this.teamsData[this.selectedCategory][this.selectedTeam].jornadas;
                 },
 
-                get currentJornadaEditablePlayers() {
-                    if (this.selectedJornada === 'global') return [];
+                // CONECTADO DIRECTAMENTE A LA JORNADA DE LA CÉDULA
+                get cedulaEditablePlayers() {
+                    const jKey = this.cedula.jornada;
+                    if (!jKey) return [];
                     const teamJornadas = this.currentTeamJornadas;
-                    if (!teamJornadas[this.selectedJornada]) {
-                        teamJornadas[this.selectedJornada] = [];
+                    if (!teamJornadas[jKey]) {
+                        teamJornadas[jKey] = [];
                     }
-                    const list = teamJornadas[this.selectedJornada];
+                    const list = teamJornadas[jKey];
 
                     return this.currentRoster.map(rPlayer => {
                         let pData = list.find(p => String(p.num) === String(rPlayer.num));
@@ -492,38 +491,6 @@
                     this.saveToFirebase(true);
                 },
 
-                guardarCambiosAdmin() {
-                    if (this.isLoggedIn) { this.saveToFirebase(true); } else { this.showLoginModal = true; }
-                },
-
-                inc(player, key) { player[key] = (Number(player[key]) || 0) + 1; },
-                dec(player, key) { const current = Number(player[key]) || 0; if (current > 0) player[key] = current - 1; },
-
-                hasValue(val) { return Number(val) > 0; },
-                hasAnyStat(p) { return (p.pasesTD || p.td || p.intercepcion || p.sacks); },
-
-                get whatsappText() {
-                    const label = this.selectedJornada === 'global' ? 'ACUMULADO GLOBAL' : `FASE: ${this.selectedJornada.toUpperCase()}`;
-                    let msg = `⚡ *LEXFA FLAG MEX 2026* ⚡\n`;
-                    msg += `🏆 *${this.selectedCategory.toUpperCase()} - ${this.selectedTeam.toUpperCase()}*\n`;
-                    msg += `📊 *REPORTE - ${label}*\n`;
-                    msg += `────────────────────────────\n\n`;
-
-                    msg += `📊 *ESTADÍSTICAS DEL EQUIPO*\n`;
-                    this.currentPlayers.forEach(p => {
-                        if (this.hasAnyStat(p)) {
-                            let stats = [];
-                            if (p.pasesTD) stats.push(`${p.pasesTD} Pases TD`);
-                            if (p.td) stats.push(`${p.td} TDs`);
-                            if (p.intercepcion) stats.push(`${p.intercepcion} INT`);
-                            if (p.sacks) stats.push(`${p.sacks} Sacks`);
-                            msg += `• *#${p.num} ${p.name}*: ${stats.join(' | ')}\n`;
-                        }
-                    });
-                    msg += `\n⚡ *LEXFA FLAG MEX* 🏛️`;
-                    return msg;
-                },
-
                 copyWhatsAppText() {
                     const text = this.whatsappText;
                     if (navigator.clipboard && window.isSecureContext) {
@@ -627,11 +594,6 @@
                     <i class="fa-solid fa-clipboard-list"></i> Cédula de Juego / Admin
                 </button>
             </div>
-
-            <button @click="copyWhatsAppText()" x-show="currentTab !== 'home'" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-2 shrink-0 shadow-sm">
-                <i class="fa-brands fa-whatsapp text-lg"></i>
-                <span x-text="copied ? '¡Copiado!' : 'Reporte WhatsApp'"></span>
-            </button>
         </div>
 
         <!-- HOME -->
@@ -695,11 +657,8 @@
             </template>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- NUEVA VISTA: GESTIÓN DE ROSTERS (CARGA Y VALIDACIÓN) -->
-        <!-- ========================================================= -->
+        <!-- GESTIÓN DE ROSTERS -->
         <div x-show="currentTab === 'rosters'" x-transition class="space-y-6">
-            
             <div class="light-card p-6 rounded-3xl border theme-border shadow-sm space-y-6">
                 <div class="flex items-center justify-between border-b border-slate-200 pb-4 flex-wrap gap-3">
                     <div class="flex items-center gap-3">
@@ -712,7 +671,6 @@
                         </div>
                     </div>
 
-                    <!-- SELECTOR DE EQUIPO DENTRO DE ROSTER -->
                     <div class="flex items-center gap-2">
                         <select x-model="selectedTeam" class="bg-white border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:outline-none cursor-pointer shadow-sm">
                             <template x-for="t in currentTeams" :key="'roster-team-' + t">
@@ -722,7 +680,6 @@
                     </div>
                 </div>
 
-                <!-- FORMULARIO DE ALTA DE JUGADORES -->
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                     <h3 class="font-brand font-bold text-xs uppercase text-slate-700 mb-3 flex items-center gap-1.5">
                         <i class="fa-solid fa-user-plus theme-text"></i> Registrar Nuevo Jugador en <span class="theme-text" x-text="selectedTeam"></span>
@@ -747,7 +704,6 @@
                     </div>
                 </div>
 
-                <!-- LISTADO COMPLETO DEL ROSTER DEL EQUIPO SELECCIONADO -->
                 <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                     <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
                         <span>PLANTILLA OFICIAL: <span class="theme-text uppercase" x-text="selectedTeam"></span> (<span x-text="selectedCategory"></span>)</span>
@@ -786,9 +742,7 @@
                         </template>
                     </div>
                 </div>
-
             </div>
-
         </div>
 
         <!-- TABLA GENERAL Y POSICIONES -->
@@ -802,7 +756,6 @@
                 </button>
             </div>
 
-            <!-- TABLA POSICIONES EQUIPOS -->
             <div x-show="tableSubTab === 'teams'" class="light-card rounded-2xl overflow-hidden shadow-sm theme-border">
                 <div class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
                     <span class="font-brand font-black text-xs uppercase tracking-wider">TABLA GENERAL DE POSICIONES — CATEGORÍA <span x-text="selectedCategory"></span></span>
@@ -847,7 +800,6 @@
                 </div>
             </div>
 
-            <!-- ESTADÍSTICAS JUGADORES -->
             <div x-show="tableSubTab === 'players'" class="space-y-4">
                 <div class="relative max-w-md">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
@@ -1055,11 +1007,11 @@
                     </div>
                 </div>
 
-                <!-- TABLA JUGADORES (CÉDULA CONECTADA CON EL ROSTER) -->
+                <!-- TABLA JUGADORES VINCULADA AL ROSTER Y JORNADA DE CÉDULA -->
                 <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm">
                     <div class="bg-slate-900 text-white px-4 py-2 flex items-center justify-between text-xs font-bold font-brand">
                         <span>ESTADÍSTICAS INDIVIDUALES DE JUGADORES</span>
-                        <span x-text="'Equipo: ' + selectedTeam + ' (Jornada ' + selectedJornada + ')'"></span>
+                        <span x-text="'Equipo: ' + selectedTeam + ' (Jornada ' + cedula.jornada + ')'"></span>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -1075,7 +1027,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 bg-white">
-                                <template x-for="p in (selectedJornada === 'global' ? [] : currentJornadaEditablePlayers)" :key="p.num">
+                                <template x-for="p in cedulaEditablePlayers" :key="p.num">
                                     <tr class="hover:bg-slate-50">
                                         <td class="py-2.5 px-3 font-bold text-slate-900 flex items-center gap-2">
                                             <span class="w-7 h-7 rounded-lg theme-bg-soft theme-text flex items-center justify-center font-mono font-black" x-text="'#' + p.num"></span>
@@ -1100,9 +1052,9 @@
                                 </template>
                             </tbody>
                         </table>
-                        <template x-if="selectedJornada === 'global'">
+                        <template x-if="currentRoster.length === 0">
                             <div class="p-8 text-center text-slate-500 text-xs italic bg-slate-50">
-                                Selecciona una jornada específica en la barra superior para capturar la cédula oficial del partido.
+                                Este equipo no tiene jugadores registrados en su Roster. Ve a la pestaña <strong>"Gestión de Rosters"</strong> para agregarlos.
                             </div>
                         </template>
                     </div>
@@ -1142,7 +1094,6 @@
                 </div>
 
             </div>
-
         </div>
 
     </main>
