@@ -114,7 +114,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '15.0',
+                DATA_VERSION: '16.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 
@@ -141,7 +141,7 @@
                 loginError: '',
                 showLoginModal: false,
 
-                // HISTORIAL DE PARTIDOS / CÉDULAS (Se carga dinámicamente de Firebase)
+                // HISTORIAL DE PARTIDOS Y CÉDULAS
                 matchesHistory: {
                     'Varonil': [],
                     'Femenil': [],
@@ -160,6 +160,7 @@
                     obsReferees: ''
                 },
 
+                // CAMPOS DE ALTA DE JUGADORES (GESTIÓN DE ROSTERS)
                 newPlayerNum: '',
                 newPlayerName: '',
                 newPlayerPos: '',
@@ -170,7 +171,7 @@
                     'Mixto': {}
                 },
 
-                // COMPUTA LA TABLA DE POSICIONES GENERAL DE LA CATEGORÍA BASADA EN LAS CÉDULAS DE FIREBASE
+                // TABLA DE POSICIONES POR EQUIPOS
                 get standingsTable() {
                     const teams = this.teamsByCategory[this.selectedCategory] || [];
                     const matches = this.matchesHistory[this.selectedCategory] || [];
@@ -302,7 +303,7 @@
                     if (!this.newPlayerNum || !this.newPlayerName) { alert("Ingresa número y nombre."); return; }
                     const roster = this.currentRoster;
                     if (roster.some(p => String(p.num) === String(this.newPlayerNum))) {
-                        alert("Ya existe el número en este equipo."); return;
+                        alert("El número de camiseta ya existe en este equipo."); return;
                     }
                     roster.push({ num: String(this.newPlayerNum), name: this.newPlayerName, pos: this.newPlayerPos || 'Jugador' });
                     this.newPlayerNum = ''; this.newPlayerName = ''; this.newPlayerPos = '';
@@ -311,6 +312,7 @@
 
                 removePlayerFromTeam(num) {
                     if (!this.isLoggedIn) { this.showLoginModal = true; return; }
+                    if (!confirm(`¿Eliminar al jugador #${num} del roster oficial?`)) return;
                     const roster = this.currentRoster;
                     const index = roster.findIndex(p => String(p.num) === String(num));
                     if (index !== -1) { roster.splice(index, 1); this.saveToFirebase(true); }
@@ -476,7 +478,6 @@
                         this.matchesHistory[this.selectedCategory] = [];
                     }
 
-                    // Agrega la cédula/partido al historial de la categoría
                     this.matchesHistory[this.selectedCategory].push({
                         jornada: this.cedula.jornada,
                         fecha: this.cedula.fecha,
@@ -598,16 +599,20 @@
     <!-- Toast -->
     <div x-show="showSuccessToast" x-transition class="fixed bottom-5 right-5 z-50 theme-gradient font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 border border-white/20">
         <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
-        <span>¡Cédula y estadísticas guardadas en Firebase!</span>
+        <span>¡Sincronizado con Firebase correctamente!</span>
     </div>
 
     <!-- Contenido Principal -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
         
+        <!-- BARRA DE NAVEGACIÓN -->
         <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-6 overflow-x-auto">
             <div class="flex items-center gap-2">
                 <button @click="currentTab = 'home'" :class="currentTab === 'home' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-house"></i> Inicio
+                </button>
+                <button @click="currentTab = 'rosters'" :class="currentTab === 'rosters' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-id-card"></i> Gestión de Rosters
                 </button>
                 <button @click="currentTab = 'table'" :class="currentTab === 'table' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-table-list"></i> Tabla General / Posiciones
@@ -688,6 +693,102 @@
                     </div>
                 </div>
             </template>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- NUEVA VISTA: GESTIÓN DE ROSTERS (CARGA Y VALIDACIÓN) -->
+        <!-- ========================================================= -->
+        <div x-show="currentTab === 'rosters'" x-transition class="space-y-6">
+            
+            <div class="light-card p-6 rounded-3xl border theme-border shadow-sm space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-4 flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl theme-bg-soft border theme-border flex items-center justify-center theme-text text-2xl font-black">
+                            <i class="fa-solid fa-users-rectangle"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-brand font-black text-xl text-slate-900">ADMINISTRADOR DE ROSTERS OFICIALES</h2>
+                            <p class="text-xs text-slate-500">Alta y validación de plantillas de jugadores para cada equipo y categoría.</p>
+                        </div>
+                    </div>
+
+                    <!-- SELECTOR DE EQUIPO DENTRO DE ROSTER -->
+                    <div class="flex items-center gap-2">
+                        <select x-model="selectedTeam" class="bg-white border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:outline-none cursor-pointer shadow-sm">
+                            <template x-for="t in currentTeams" :key="'roster-team-' + t">
+                                <option :value="t" x-text="t" class="bg-white text-slate-900"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO DE ALTA DE JUGADORES -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <h3 class="font-brand font-bold text-xs uppercase text-slate-700 mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-plus theme-text"></i> Registrar Nuevo Jugador en <span class="theme-text" x-text="selectedTeam"></span>
+                    </h3>
+
+                    <div class="flex flex-wrap gap-3 items-end">
+                        <div class="w-24">
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1"># Jersey</label>
+                            <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400">
+                        </div>
+                        <div class="flex-1 min-w-[180px]">
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nombre Completo</label>
+                            <input type="text" x-model="newPlayerName" placeholder="Ej. Juan Pérez" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400">
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Posición</label>
+                            <input type="text" x-model="newPlayerPos" placeholder="Ej. QB / WR" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400">
+                        </div>
+                        <button @click="addPlayerToTeam()" class="theme-gradient text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow hover:scale-105 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Guardar Jugador
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LISTADO COMPLETO DEL ROSTER DEL EQUIPO SELECCIONADO -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
+                        <span>PLANTILLA OFICIAL: <span class="theme-text uppercase" x-text="selectedTeam"></span> (<span x-text="selectedCategory"></span>)</span>
+                        <span class="text-[10px] text-slate-400" x-text="currentRoster.length + ' Jugadores Registrados'"></span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-700">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 uppercase border-b border-slate-200 font-extrabold text-[10px]">
+                                    <th class="py-3 px-4 text-center w-16">#</th>
+                                    <th class="py-3 px-4 text-left">Nombre Completo del Jugador</th>
+                                    <th class="py-3 px-4 text-left">Posición</th>
+                                    <th class="py-3 px-4 text-center w-24">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                <template x-for="p in currentRoster" :key="'roster-list-' + p.num">
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="py-3 px-4 text-center font-black font-mono theme-text text-sm" x-text="'#' + p.num"></td>
+                                        <td class="py-3 px-4 font-bold text-slate-900" x-text="p.name"></td>
+                                        <td class="py-3 px-4 text-slate-500 font-medium" x-text="p.pos"></td>
+                                        <td class="py-3 px-4 text-center">
+                                            <button @click="removePlayerFromTeam(p.num)" class="text-red-600 hover:text-red-500 p-1 rounded-lg transition" title="Eliminar del roster">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        <template x-if="currentRoster.length === 0">
+                            <div class="p-8 text-center text-slate-400 text-xs italic bg-slate-50">
+                                No hay jugadores registrados en el roster de este equipo. Utiliza el formulario superior para darlos de alta.
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
 
         <!-- TABLA GENERAL Y POSICIONES -->
@@ -954,7 +1055,7 @@
                     </div>
                 </div>
 
-                <!-- TABLA JUGADORES -->
+                <!-- TABLA JUGADORES (CÉDULA CONECTADA CON EL ROSTER) -->
                 <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm">
                     <div class="bg-slate-900 text-white px-4 py-2 flex items-center justify-between text-xs font-bold font-brand">
                         <span>ESTADÍSTICAS INDIVIDUALES DE JUGADORES</span>
@@ -965,7 +1066,7 @@
                         <table class="w-full text-xs text-left text-slate-800">
                             <thead>
                                 <tr class="bg-slate-100 text-slate-700 uppercase border-b border-slate-200 text-center font-extrabold text-[10px]">
-                                    <th class="py-3 px-3 text-left"># / Jugador</th>
+                                    <th class="py-3 px-3 text-left"># / Jugador (Roster Oficial)</th>
                                     <th class="py-3 px-2 text-center w-20">PTD</th>
                                     <th class="py-3 px-2 text-center w-20">TD</th>
                                     <th class="py-3 px-2 text-center w-20">PTS / Extra</th>
@@ -978,7 +1079,7 @@
                                     <tr class="hover:bg-slate-50">
                                         <td class="py-2.5 px-3 font-bold text-slate-900 flex items-center gap-2">
                                             <span class="w-7 h-7 rounded-lg theme-bg-soft theme-text flex items-center justify-center font-mono font-black" x-text="'#' + p.num"></span>
-                                            <span x-text="currentRoster.find(r => String(r.num) === String(p.num))?.name || ''"></span>
+                                            <span x-text="currentRoster.find(r => String(r.num) === String(p.num))?.name || 'Jugador no asignado'"></span>
                                         </td>
                                         <td class="py-2.5 px-2 text-center">
                                             <input type="number" min="0" x-model.number="p.pasesTD" class="w-14 bg-slate-50 border border-slate-300 rounded-lg text-center py-1 font-bold text-slate-900 focus:outline-none focus:border-blue-500">
@@ -1040,42 +1141,6 @@
                     </div>
                 </div>
 
-            </div>
-
-            <!-- ROSTER -->
-            <div class="light-card p-5 rounded-2xl border theme-border shadow-sm">
-                <h3 class="font-brand font-bold text-sm theme-text mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-users-gear"></i> Roster del Equipo: <span class="text-slate-900 underline" x-text="selectedTeam + ' (' + selectedCategory + ')'"></span>
-                </h3>
-
-                <div class="flex flex-wrap gap-2 items-end mb-4">
-                    <div>
-                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Número #</label>
-                        <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-20 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
-                    </div>
-                    <div class="flex-1 min-w-[150px]">
-                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nombre Completo</label>
-                        <input type="text" x-model="newPlayerName" placeholder="Ej. Carlos Pérez" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Posición</label>
-                        <input type="text" x-model="newPlayerPos" placeholder="Ej. QB / WR" class="w-32 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
-                    </div>
-                    <button @click="addPlayerToTeam()" class="theme-gradient text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-sm hover:scale-105 transition">
-                        <i class="fa-solid fa-user-plus mr-1"></i> Agregar Jugador
-                    </button>
-                </div>
-
-                <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1">
-                    <template x-for="p in currentRoster" :key="p.num">
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs shadow-sm">
-                            <span class="font-mono font-bold theme-text" x-text="'#' + p.num"></span>
-                            <span class="text-slate-800 font-medium" x-text="p.name"></span>
-                            <span class="text-slate-400 text-[10px]" x-text="'(' + p.pos + ')'"></span>
-                            <button @click="removePlayerFromTeam(p.num)" class="text-red-600 hover:text-red-500 ml-2"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
-                        </div>
-                    </template>
-                </div>
             </div>
 
         </div>
