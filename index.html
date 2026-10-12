@@ -122,8 +122,8 @@
                 selectedPlayer: null,
                 
                 isLoggedIn: false,
-                coachEmail: '',
-                coachPassword: '',
+                adminEmail: '',
+                adminPassword: '',
                 loginError: '',
                 showLoginModal: false,
 
@@ -303,15 +303,15 @@
                     }
                 },
 
-                loginCoach() {
+                loginAdmin() {
                     this.loginError = '';
                     if (!auth) { this.loginError = "Auth no inicializado."; return; }
-                    auth.signInWithEmailAndPassword(this.coachEmail, this.coachPassword)
-                        .then(() => { this.coachEmail = ''; this.coachPassword = ''; this.showLoginModal = false; })
+                    auth.signInWithEmailAndPassword(this.adminEmail, this.adminPassword)
+                        .then(() => { this.adminEmail = ''; this.adminPassword = ''; this.showLoginModal = false; })
                         .catch(() => { this.loginError = "Credenciales incorrectas."; });
                 },
 
-                logoutCoach() {
+                logoutAdmin() {
                     if (auth) { auth.signOut().then(() => { this.showSuccessToast = true; setTimeout(() => { this.showSuccessToast = false; }, 3000); }); }
                 },
 
@@ -330,7 +330,7 @@
                     }
                 },
 
-                guardarCambiosCoach() {
+                guardarCambiosAdmin() {
                     if (this.isLoggedIn) { this.saveToFirebase(true); } else { this.showLoginModal = true; }
                 },
 
@@ -447,13 +447,13 @@
 
                 <!-- Login / Logout -->
                 <template x-if="isLoggedIn">
-                    <button @click="logoutCoach()" class="bg-red-900/40 hover:bg-red-900 text-red-300 border border-red-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+                    <button @click="logoutAdmin()" class="bg-red-900/40 hover:bg-red-900 text-red-300 border border-red-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
                         <i class="fa-solid fa-right-from-bracket"></i> Salir
                     </button>
                 </template>
                 <template x-if="!isLoggedIn">
                     <button @click="showLoginModal = true" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
-                        <i class="fa-solid fa-lock"></i> Login Coach
+                        <i class="fa-solid fa-lock"></i> Login Admin
                     </button>
                 </template>
             </div>
@@ -644,7 +644,7 @@
                         <button @click="addJornada()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs px-3 py-2 rounded-xl border border-zinc-700 transition">
                             <i class="fa-solid fa-plus mr-1"></i> Nueva Jornada
                         </button>
-                        <button @click="guardarCambiosCoach()" class="gold-gradient text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition">
+                        <button @click="guardarCambiosAdmin()" class="gold-gradient text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition">
                             <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Guardar en la Nube
                         </button>
                     </div>
@@ -725,16 +725,16 @@
                 <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3 text-amber-400 text-xl">
                     <i class="fa-solid fa-lock"></i>
                 </div>
-                <h3 class="font-greek font-black text-xl text-white">ACCESO DE COACH</h3>
+                <h3 class="font-greek font-black text-xl text-white">ACCESO DE ADMIN</h3>
             </div>
-            <form @submit.prevent="loginCoach()" class="space-y-4">
+            <form @submit.prevent="loginAdmin()" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-amber-400 mb-1 uppercase">Correo</label>
-                    <input type="email" x-model="coachEmail" required placeholder="coach@lexfa.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <input type="email" x-model="adminEmail" required placeholder="admin@tochostat.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-amber-400 mb-1 uppercase">Contraseña</label>
-                    <input type="password" x-model="coachPassword" required placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <input type="password" x-model="adminPassword" required placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
                 <template x-if="loginError"><p class="text-xs text-red-400 font-bold text-center" x-text="loginError"></p></template>
                 <button type="submit" class="w-full gold-gradient text-black font-extrabold text-xs py-3 rounded-xl shadow-lg transition">Iniciar Sesión</button>
