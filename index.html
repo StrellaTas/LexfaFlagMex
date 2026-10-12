@@ -114,7 +114,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '19.0',
+                DATA_VERSION: '21.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 
@@ -147,6 +147,7 @@
                     'Mixto': []
                 },
 
+                // ESTRUCTURA DE LA CÉDULA DE JUEGO
                 cedula: {
                     jornada: '1',
                     fecha: new Date().toISOString().split('T')[0],
@@ -167,7 +168,19 @@
                     ptsExtra: 0   
                 },
 
+                nuevoSack: {
+                    equipo: '',
+                    numSacker: ''
+                },
+
+                nuevaIntercepcion: {
+                    equipo: '',
+                    numInterceptor: ''
+                },
+
                 anotacionesRegistradas: [],
+                sacksRegistrados: [],
+                intercepcionesRegistradas: [],
 
                 newPlayerNum: '',
                 newPlayerName: '',
@@ -179,7 +192,7 @@
                     'Mixto': {}
                 },
 
-                // BUSCA SI EXISTE UN PARTIDO REGISTRADO Y RECOMPONE LOS DATOS O LIMPIA LA CÉDULA
+                // VERIFICA SI EXISTE UN PARTIDO PREVIO O LIMPIA LA CÉDULA
                 checkAndLoadExistingMatch() {
                     const matches = this.matchesHistory[this.selectedCategory] || [];
                     const loc = this.cedula.equipoLocal;
@@ -201,18 +214,22 @@
                             this.cedula.marcadorVisita = Number(match.marcadorVisita || 0);
                             this.cedula.obsReferees = match.obsReferees || '';
                             this.anotacionesRegistradas = match.anotaciones ? JSON.parse(JSON.stringify(match.anotaciones)) : [];
+                            this.sacksRegistrados = match.sacks ? JSON.parse(JSON.stringify(match.sacks)) : [];
+                            this.intercepcionesRegistradas = match.intercepciones ? JSON.parse(JSON.stringify(match.intercepciones)) : [];
                         } else {
-                            // Si es un partido nuevo
                             this.cedula.marcadorLocal = 0;
                             this.cedula.marcadorVisita = 0;
                             this.cedula.obsReferees = '';
                             this.anotacionesRegistradas = [];
+                            this.sacksRegistrados = [];
+                            this.intercepcionesRegistradas = [];
                         }
                     } else {
-                        // Si no hay ambos equipos definidos
                         this.cedula.marcadorLocal = 0;
                         this.cedula.marcadorVisita = 0;
                         this.anotacionesRegistradas = [];
+                        this.sacksRegistrados = [];
+                        this.intercepcionesRegistradas = [];
                     }
                 },
 
@@ -223,12 +240,49 @@
                     return (teamObj && teamObj.roster) ? teamObj.roster : [];
                 },
 
+                get rosterEquipoSack() {
+                    if (!this.nuevoSack.equipo) return [];
+                    const catData = this.teamsData[this.selectedCategory] || {};
+                    const teamObj = catData[this.nuevoSack.equipo];
+                    return (teamObj && teamObj.roster) ? teamObj.roster : [];
+                },
+
+                get rosterEquipoIntercepcion() {
+                    if (!this.nuevaIntercepcion.equipo) return [];
+                    const catData = this.teamsData[this.selectedCategory] || {};
+                    const teamObj = catData[this.nuevaIntercepcion.equipo];
+                    return (teamObj && teamObj.roster) ? teamObj.roster : [];
+                },
+
+                // LISTA DE JUGADORES Y SUS ESTADÍSTICAS EN EL PARTIDO SELECCIONADO
+                getPlayersStatsForTeamAndJornada(teamName, jornadaKey) {
+                    if (!teamName || !jornadaKey) return [];
+                    const catData = this.teamsData[this.selectedCategory] || {};
+                    const teamObj = catData[teamName] || { roster: [], jornadas: {} };
+                    const roster = teamObj.roster || [];
+                    const jList = (teamObj.jornadas && teamObj.jornadas[jornadaKey]) ? teamObj.jornadas[jornadaKey] : [];
+
+                    return roster.map(p => {
+                        const pData = jList.find(item => String(item.num) === String(p.num)) || {};
+                        return {
+                            num: p.num,
+                            name: p.name,
+                            pos: p.pos,
+                            pasesTD: Number(pData.pasesTD || 0),
+                            td: Number(pData.td || 0),
+                            extra: Number(pData.extra || 0),
+                            intercepcion: Number(pData.intercepcion || 0),
+                            sacks: Number(pData.sacks || 0)
+                        };
+                    });
+                },
+
                 agregarAnotacion() {
                     if (!this.nuevaAnotacion.equipo) {
                         alert("Selecciona el equipo que realizó la anotación.");
                         return;
                     }
-                    if (!this.nuevaAnotacion.numScore) {
+                    if (!this.nuevaAnotacion.numScore && Number(this.nuevaAnotacion.ptsTD) !== 0) {
                         alert("Selecciona o ingresa el número del jugador que anotó.");
                         return;
                     }
@@ -245,14 +299,16 @@
                     this.anotacionesRegistradas.push({
                         equipo: eq,
                         numPass: this.nuevaAnotacion.numPass || 'N/A',
-                        numScore: this.nuevaAnotacion.numScore,
+                        numScore: this.nuevaAnotacion.numScore || 'N/A',
                         ptsTD: Number(this.nuevaAnotacion.ptsTD),
                         ptsExtra: Number(this.nuevaAnotacion.ptsExtra),
                         totalPts: totalPts
                     });
 
-                    this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numScore, 'td', 1);
-                    if (this.nuevaAnotacion.ptsExtra > 0) {
+                    if (this.nuevaAnotacion.numScore && this.nuevaAnotacion.numScore !== 'N/A' && Number(this.nuevaAnotacion.ptsTD) > 0) {
+                        this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numScore, 'td', 1);
+                    }
+                    if (this.nuevaAnotacion.ptsExtra > 0 && this.nuevaAnotacion.numScore && this.nuevaAnotacion.numScore !== 'N/A') {
                         this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numScore, 'extra', Number(this.nuevaAnotacion.ptsExtra));
                     }
                     if (this.nuevaAnotacion.numPass && this.nuevaAnotacion.numPass !== 'N/A') {
@@ -263,6 +319,52 @@
                     this.nuevaAnotacion.numScore = '';
                     this.nuevaAnotacion.ptsTD = 6;
                     this.nuevaAnotacion.ptsExtra = 0;
+                },
+
+                agregarSack() {
+                    if (!this.nuevoSack.equipo) {
+                        alert("Selecciona el equipo defensivo que realizó el Sack.");
+                        return;
+                    }
+                    if (!this.nuevoSack.numSacker) {
+                        alert("Selecciona el jugador que realizó la captura (Sack).");
+                        return;
+                    }
+
+                    const eq = this.nuevoSack.equipo;
+                    const num = this.nuevoSack.numSacker;
+
+                    this.sacksRegistrados.push({
+                        equipo: eq,
+                        numSacker: num
+                    });
+
+                    this.incrementarEstadisticaJugador(eq, num, 'sacks', 1);
+
+                    this.nuevoSack.numSacker = '';
+                },
+
+                agregarIntercepcion() {
+                    if (!this.nuevaIntercepcion.equipo) {
+                        alert("Selecciona el equipo defensivo que realizó la intercepción.");
+                        return;
+                    }
+                    if (!this.nuevaIntercepcion.numInterceptor) {
+                        alert("Selecciona el jugador que realizó la intercepción (INT).");
+                        return;
+                    }
+
+                    const eq = this.nuevaIntercepcion.equipo;
+                    const num = this.nuevaIntercepcion.numInterceptor;
+
+                    this.intercepcionesRegistradas.push({
+                        equipo: eq,
+                        numInterceptor: num
+                    });
+
+                    this.incrementarEstadisticaJugador(eq, num, 'intercepcion', 1);
+
+                    this.nuevaIntercepcion.numInterceptor = '';
                 },
 
                 incrementarEstadisticaJugador(equipo, num, statKey, cantidad = 1) {
@@ -595,7 +697,9 @@
                         equipoVisita: this.cedula.equipoVisita,
                         marcadorVisita: Number(this.cedula.marcadorVisita || 0),
                         obsReferees: this.cedula.obsReferees,
-                        anotaciones: this.anotacionesRegistradas
+                        anotaciones: this.anotacionesRegistradas,
+                        sacks: this.sacksRegistrados,
+                        intercepciones: this.intercepcionesRegistradas
                     };
 
                     if (matchIndex !== -1) {
@@ -1084,7 +1188,7 @@
                     </template>
                 </div>
 
-                <!-- ENCABEZADO CÉDULA CON DISPARADOR DE BÚSQUEDA AUTOMÁTICA DE PARTIDO -->
+                <!-- ENCABEZADO CÉDULA -->
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Jornada</label>
@@ -1112,7 +1216,7 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN MARCADOR CON BÚSQUEDA AUTOMÁTICA EN @CHANGE -->
+                <!-- SECCIÓN MARCADOR -->
                 <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
                     <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5 text-xs">
                         <i class="fa-solid fa-trophy theme-text"></i> Selección de Equipos del Partido
@@ -1185,6 +1289,8 @@
                             <div>
                                 <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Valor Anotación</label>
                                 <select x-model.number="nuevaAnotacion.ptsTD" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="0">No Aplica</option>
+                                    <option value="5">Touchdown (5 Puntos)</option>
                                     <option value="6">Touchdown (6 Puntos)</option>
                                     <option value="2">Safety (2 Puntos)</option>
                                 </select>
@@ -1231,6 +1337,201 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- CAPTURADOR DE INTERCEPCIONES (INT) -->
+                <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm bg-white">
+                    <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
+                        <span>CAPTURADOR DE INTERCEPCIONES (INT - DEFENSIVA)</span>
+                        <span class="text-[10px] text-slate-400">Métrica Individual</span>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 border-b border-slate-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end text-xs">
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Equipo Defensivo</label>
+                                <select x-model="nuevaIntercepcion.equipo" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="">-- Seleccionar --</option>
+                                    <template x-if="cedula.equipoLocal"><option :value="cedula.equipoLocal" x-text="cedula.equipoLocal + ' (Local)'"></option></template>
+                                    <template x-if="cedula.equipoVisita"><option :value="cedula.equipoVisita" x-text="cedula.equipoVisita + ' (Visita)'"></option></template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1"># Jugador que Interceptó</label>
+                                <select x-model="nuevaIntercepcion.numInterceptor" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="">-- Seleccionar Jugador --</option>
+                                    <template x-for="p in rosterEquipoIntercepcion" :key="'int-' + p.num">
+                                        <option :value="p.num" x-text="'#' + p.num + ' - ' + p.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div class="text-right">
+                                <button @click="agregarIntercepcion()" class="theme-gradient text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow transition hover:scale-105">
+                                    <i class="fa-solid fa-shield-halved mr-1"></i> Registrar Intercepción
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HISTORIAL DE INTERCEPCIONES REGISTRADAS -->
+                    <div class="p-4">
+                        <h5 class="text-[11px] font-bold text-slate-500 uppercase mb-2">Intercepciones registradas en esta Cédula:</h5>
+                        <div class="space-y-1.5 max-h-32 overflow-y-auto">
+                            <template x-for="(intObj, idx) in intercepcionesRegistradas" :key="'int-reg-' + idx">
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs flex items-center justify-between">
+                                    <div>
+                                        <strong class="theme-text" x-text="intObj.equipo"></strong> • 
+                                        <span>Interceptó: <strong>#<span x-text="intObj.numInterceptor"></span></strong></span>
+                                    </div>
+                                    <div class="font-black text-slate-900">+1 INT</div>
+                                </div>
+                            </template>
+                            <template x-if="intercepcionesRegistradas.length === 0">
+                                <p class="text-slate-400 text-xs italic">Aún no hay intercepciones registradas para este partido.</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAPTURADOR DE SACKS (CAPTURAS DE QB) -->
+                <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm bg-white">
+                    <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
+                        <span>CAPTURADOR DE SACKS (DEFENSIVA)</span>
+                        <span class="text-[10px] text-slate-400">Métrica Individual</span>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 border-b border-slate-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end text-xs">
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Equipo Defensivo</label>
+                                <select x-model="nuevoSack.equipo" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="">-- Seleccionar --</option>
+                                    <template x-if="cedula.equipoLocal"><option :value="cedula.equipoLocal" x-text="cedula.equipoLocal + ' (Local)'"></option></template>
+                                    <template x-if="cedula.equipoVisita"><option :value="cedula.equipoVisita" x-text="cedula.equipoVisita + ' (Visita)'"></option></template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1"># Jugador que realizó el Sack</label>
+                                <select x-model="nuevoSack.numSacker" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="">-- Seleccionar Jugador --</option>
+                                    <template x-for="p in rosterEquipoSack" :key="'sack-' + p.num">
+                                        <option :value="p.num" x-text="'#' + p.num + ' - ' + p.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div class="text-right">
+                                <button @click="agregarSack()" class="theme-gradient text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow transition hover:scale-105">
+                                    <i class="fa-solid fa-hand-fist mr-1"></i> Registrar Sack
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HISTORIAL DE SACKS REGISTRADOS -->
+                    <div class="p-4">
+                        <h5 class="text-[11px] font-bold text-slate-500 uppercase mb-2">Sacks registrados en esta Cédula:</h5>
+                        <div class="space-y-1.5 max-h-32 overflow-y-auto">
+                            <template x-for="(sk, idx) in sacksRegistrados" :key="'sack-reg-' + idx">
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs flex items-center justify-between">
+                                    <div>
+                                        <strong class="theme-text" x-text="sk.equipo"></strong> • 
+                                        <span>Captura por: <strong>#<span x-text="sk.numSacker"></span></strong></span>
+                                    </div>
+                                    <div class="font-black text-slate-900">+1 Sack</div>
+                                </div>
+                            </template>
+                            <template x-if="sacksRegistrados.length === 0">
+                                <p class="text-slate-400 text-xs italic">Aún no hay sacks registrados para este partido.</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DESGLOSE ESTADÍSTICO INDIVIDUAL DE LOS EQUIPOS EN EL PARTIDO -->
+                <template x-if="cedula.equipoLocal && cedula.equipoVisita">
+                    <div class="space-y-6 pt-4 border-t border-slate-200">
+                        <h4 class="font-brand font-black text-sm uppercase text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check theme-text"></i> Desglose de Métricas Individuales del Partido (Jornada <span x-text="cedula.jornada"></span>)
+                        </h4>
+
+                        <!-- TABLA EQUIPO LOCAL -->
+                        <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+                            <div class="bg-slate-800 text-white px-4 py-2 font-brand font-bold text-xs flex justify-between">
+                                <span>EQUIPO LOCAL: <span class="theme-text" x-text="cedula.equipoLocal"></span></span>
+                                <span>Roster Oficial</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left text-slate-700">
+                                    <thead>
+                                        <tr class="bg-slate-100 text-slate-600 uppercase border-b border-slate-200 text-center font-bold text-[10px]">
+                                            <th class="py-2.5 px-3 text-left"># / Jugador</th>
+                                            <th class="py-2.5 px-2">Pases TD</th>
+                                            <th class="py-2.5 px-2">TDs</th>
+                                            <th class="py-2.5 px-2">Pts Extra</th>
+                                            <th class="py-2.5 px-2">INTs</th>
+                                            <th class="py-2.5 px-2">Sacks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 font-medium">
+                                        <template x-for="p in getPlayersStatsForTeamAndJornada(cedula.equipoLocal, cedula.jornada)" :key="'loc-stat-' + p.num">
+                                            <tr class="hover:bg-slate-50 transition text-center">
+                                                <td class="py-2 px-3 font-bold text-slate-900 text-left flex items-center gap-2">
+                                                    <span class="w-6 h-6 rounded-md theme-bg-soft theme-text flex items-center justify-center font-mono font-black" x-text="'#' + p.num"></span>
+                                                    <span x-text="p.name"></span>
+                                                </td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.pasesTD"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.td"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.extra"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.intercepcion"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.sacks"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TABLA EQUIPO VISITA -->
+                        <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+                            <div class="bg-slate-800 text-white px-4 py-2 font-brand font-bold text-xs flex justify-between">
+                                <span>EQUIPO VISITA: <span class="theme-text" x-text="cedula.equipoVisita"></span></span>
+                                <span>Roster Oficial</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left text-slate-700">
+                                    <thead>
+                                        <tr class="bg-slate-100 text-slate-600 uppercase border-b border-slate-200 text-center font-bold text-[10px]">
+                                            <th class="py-2.5 px-3 text-left"># / Jugador</th>
+                                            <th class="py-2.5 px-2">Pases TD</th>
+                                            <th class="py-2.5 px-2">TDs</th>
+                                            <th class="py-2.5 px-2">Pts Extra</th>
+                                            <th class="py-2.5 px-2">INTs</th>
+                                            <th class="py-2.5 px-2">Sacks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 font-medium">
+                                        <template x-for="p in getPlayersStatsForTeamAndJornada(cedula.equipoVisita, cedula.jornada)" :key="'vis-stat-' + p.num">
+                                            <tr class="hover:bg-slate-50 transition text-center">
+                                                <td class="py-2 px-3 font-bold text-slate-900 text-left flex items-center gap-2">
+                                                    <span class="w-6 h-6 rounded-md theme-bg-soft theme-text flex items-center justify-center font-mono font-black" x-text="'#' + p.num"></span>
+                                                    <span x-text="p.name"></span>
+                                                </td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.pasesTD"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.td"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.extra"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.intercepcion"></td>
+                                                <td class="py-2 px-2 font-bold" x-text="p.sacks"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
                 <!-- MARCADOR FINAL AUTOMÁTICO -->
                 <div class="bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-around text-center shadow">
