@@ -995,4 +995,23 @@
             <form @submit.prevent="loginAdmin()" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold theme-text mb-1 uppercase">Correo Admin</label>
-                    <input type="email" x-model="adminEmail" required placeholder="admin@lexfa.com" class="w-full bg-white border border-slate-200 rounded-xl px
+                    <input type="email" x-model="adminEmail" required placeholder="admin@lexfa.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold theme-text mb-1 uppercase">Contraseña</label>
+                    <input type="password" x-model="adminPassword" required placeholder="••••••••" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
+                </div>
+                <template x-if="loginError"><p class="text-xs text-red-600 font-bold text-center" x-text="loginError"></p></template>
+                <button type="submit" class="w-full theme-gradient text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition">Iniciar Sesión Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white py-4 mt-8 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-xs text-slate-500 font-medium">© 2026 <span class="theme-text font-bold font-brand">Lexfa Flag Mex</span> • Official Statistics Hub</p>
+        </div>
+    </footer>
+</body>
+</html>
