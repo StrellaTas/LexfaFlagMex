@@ -117,7 +117,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '9.0',
+                DATA_VERSION: '10.0',
                 currentTab: 'table',
                 
                 selectedCategory: 'Varonil',
@@ -201,6 +201,26 @@
                         this.teamsData[this.selectedCategory][this.selectedTeam].jornadas = {};
                     }
                     return this.teamsData[this.selectedCategory][this.selectedTeam].jornadas;
+                },
+
+                // ASEGURA QUE CUALQUIER JUGADOR NUEVO EN EL ROSTER APAREZCA EN LA JORNADA SELECCIONADA
+                get currentJornadaEditablePlayers() {
+                    if (this.selectedJornada === 'global') return [];
+                    const teamJornadas = this.currentTeamJornadas;
+                    if (!teamJornadas[this.selectedJornada]) {
+                        teamJornadas[this.selectedJornada] = [];
+                    }
+                    const list = teamJornadas[this.selectedJornada];
+
+                    // Sincroniza el roster con los jugadores de esta jornada
+                    return this.currentRoster.map(rPlayer => {
+                        let pData = list.find(p => String(p.num) === String(rPlayer.num));
+                        if (!pData) {
+                            pData = { num: rPlayer.num, pasesTD: 0, td: 0, intercepcion: 0, sacks: 0 };
+                            list.push(pData);
+                        }
+                        return pData;
+                    });
                 },
 
                 addPlayerToTeam() {
@@ -385,6 +405,33 @@
                     }));
 
                     this.selectedJornada = String(nextJornada);
+                    this.saveToFirebase(true);
+                },
+
+                deleteCurrentJornada() {
+                    if (!this.isLoggedIn) { this.showLoginModal = true; return; }
+                    if (this.selectedJornada === 'global') {
+                        alert("No puedes borrar la vista global.");
+                        return;
+                    }
+                    if (!confirm(`¿Estás seguro de eliminar la Jornada / Fase "${this.selectedJornada}" para este equipo?`)) {
+                        return;
+                    }
+
+                    const teamJornadas = this.currentTeamJornadas;
+                    delete teamJornadas[this.selectedJornada];
+
+                    const index = this.availableJornadas.indexOf(this.selectedJornada);
+                    if (index !== -1) {
+                        this.availableJornadas.splice(index, 1);
+                    } else {
+                        const numIdx = this.availableJornadas.indexOf(Number(this.selectedJornada));
+                        if (numIdx !== -1) {
+                            this.availableJornadas.splice(numIdx, 1);
+                        }
+                    }
+
+                    this.selectedJornada = 'global';
                     this.saveToFirebase(true);
                 },
 
@@ -758,10 +805,15 @@
                 </h2>
                 
                 <template x-if="isLoggedIn">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <button @click="addJornada()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs px-3 py-2 rounded-xl border border-zinc-700 transition">
                             <i class="fa-solid fa-plus mr-1"></i> Nueva Jornada
                         </button>
+                        <template x-if="selectedJornada !== 'global'">
+                            <button @click="deleteCurrentJornada()" class="bg-red-900/40 hover:bg-red-900 text-red-300 border border-red-500/40 font-bold text-xs px-3 py-2 rounded-xl transition">
+                                <i class="fa-solid fa-trash-can mr-1"></i> Borrar Jornada
+                            </button>
+                        </template>
                         <button @click="guardarCambiosAdmin()" class="theme-gradient text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition">
                             <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Guardar en la Nube
                         </button>
@@ -783,7 +835,8 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-800/60">
-                            <template x-for="p in (currentTeamJornadas[selectedJornada] || [])" :key="p.num">
+                            <!-- Se usa currentJornadaEditablePlayers para que los jugadores nuevos aparezcan en cualquier jornada -->
+                            <template x-for="p in (selectedJornada === 'global' ? [] : currentJornadaEditablePlayers)" :key="p.num">
                                 <tr class="hover:bg-zinc-900/40">
                                     <td class="py-3 px-4 font-extrabold theme-text" x-text="'#' + p.num"></td>
                                     <td class="py-3 px-4 font-bold text-white" x-text="currentRoster.find(r => String(r.num) === String(p.num))?.name || ''"></td>
@@ -827,6 +880,11 @@
                             </template>
                         </tbody>
                     </table>
+                    <template x-if="selectedJornada === 'global'">
+                        <div class="p-8 text-center text-zinc-500 text-xs italic">
+                            Selecciona una jornada específica en la parte superior para editar las estadísticas individuales por partido.
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
