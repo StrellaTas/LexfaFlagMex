@@ -126,7 +126,7 @@
                 teamsByCategory: {
                     'Varonil': ['Olympus', 'Spartans', 'Titans', 'Gladiators', 'Cronos', 'Hades', 'Poseidon', 'Zeus', 'Ares'],
                     'Femenil': ['Valkyries', 'Athena', 'Niké', 'Hécate', 'Artemisa'],
-                    'Mixto': ['Olympus', 'Titans', 'Spartans']
+                    'Mixto': ['Olympus Mixto', 'Titans Mixto', 'Spartans Mixto']
                 },
 
                 selectedTeam: 'Olympus',
@@ -169,9 +169,15 @@
                     'Mixto': {}
                 },
 
-                // OBTENER LA RUTA DEL LOGO DEL EQUIPO O UN FALLBACK
+                // OBTENER LA RUTA DEL LOGO DEL EQUIPO (Limpia "Femenil" y "Mixto" para compartir el mismo logo)
                 getTeamLogoUrl(teamName) {
-                    const cleanName = teamName.replace(/\s+/g, '');
+                    // 1. Quita las palabras 'Femenil' o 'Mixto' (case-insensitive)
+                    let baseTeamName = teamName.replace(/femenil|mixto/gi, '').trim();
+                    
+                    // 2. Elimina espacios intermedios (ej: "Olympus " -> "Olympus")
+                    const cleanName = baseTeamName.replace(/\s+/g, '');
+                    
+                    // 3. Devuelve la ruta en la carpeta logos/
                     return `logos/${cleanName}.png`;
                 },
 
@@ -515,7 +521,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-3 cursor-pointer" @click="currentTab = 'home'">
                 <div class="contenedor-logo">
-                    <img src="Olympus.png" alt="Lexfa Logo" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=L&background=22c55e&color=fff';">
+                    <img src="https://github.com/StrellaTas/LexfaFlagMex/blob/main/logos/Lexfa.jpeg" alt="Lexfa Logo" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=L&background=22c55e&color=fff';">
                 </div>
                 <div>
                     <h1 class="font-brand font-black text-lg sm:text-xl text-white tracking-wider flex items-center gap-2">
