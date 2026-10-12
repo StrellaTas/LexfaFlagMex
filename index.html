@@ -1160,6 +1160,7 @@
                             <div>
                                 <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Valor Anotación</label>
                                 <select x-model.number="nuevaAnotacion.ptsTD" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
+                                    <option value="0">No Aplica</option>
                                     <option value="6">Touchdown (6 Puntos)</option>
                                     <option value="2">Safety (2 Puntos)</option>
                                 </select>
@@ -1168,10 +1169,9 @@
                             <div>
                                 <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Punto Extra</label>
                                 <select x-model.number="nuevaAnotacion.ptsExtra" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
-                                    <option value="0">No Aplica / Fallado (0 pts)</option>
+                                    <option value="0">No Aplica</option>
                                     <option value="1">Conversión +1 Punto</option>
                                     <option value="2">Conversión +2 Puntos</option>
-                                    <option value="3">Conversión +3 Puntos</option>
                                 </select>
                             </div>
                         </div>
