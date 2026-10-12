@@ -54,59 +54,58 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Fondo gris muy claro / blanco */
-            color: #0f172a;           /* Texto oscuro para buen contraste */
+            background-color: #f8fafc; /* Fondo blanco / gris muy claro */
+            color: #0f172a;           /* Texto oscuro principal */
             background-attachment: fixed;
             transition: background 0.3s ease;
         }
 
         .font-brand { font-family: 'Montserrat', sans-serif; }
 
-        /* ESTILOS DE TEMA POR CATEGORÍA */
+        /* ESTILOS DE TEMA POR CATEGORÍA (Adaptados a Tema Claro) */
         /* Varonil: Azul */
         body.theme-varonil {
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.18) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(29, 78, 216, 0.08) 0%, transparent 40%);
+                radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(29, 78, 216, 0.04) 0%, transparent 40%);
         }
-        .theme-varonil .theme-gradient { background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #1d4ed8 100%); color: #000; }
-        .theme-varonil .theme-border { border-color: rgba(59, 130, 246, 0.35); }
-        .theme-varonil .theme-text { color: #60a5fa; }
-        .theme-varonil .theme-bg-soft { background-color: rgba(59, 130, 246, 0.12); }
+        .theme-varonil .theme-gradient { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff; }
+        .theme-varonil .theme-border { border-color: rgba(59, 130, 246, 0.25); }
+        .theme-varonil .theme-text { color: #2563eb; }
+        .theme-varonil .theme-bg-soft { background-color: rgba(59, 130, 246, 0.08); }
 
         /* Femenil: Rosa / Magenta */
         body.theme-femenil {
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(236, 72, 153, 0.18) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(190, 24, 93, 0.08) 0%, transparent 40%);
+                radial-gradient(circle at 50% 0%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(190, 24, 93, 0.04) 0%, transparent 40%);
         }
-        .theme-femenil .theme-gradient { background: linear-gradient(135deg, #f472b6 0%, #ec4899 50%, #be185d 100%); color: #000; }
-        .theme-femenil .theme-border { border-color: rgba(236, 72, 153, 0.35); }
-        .theme-femenil .theme-text { color: #f472b6; }
-        .theme-femenil .theme-bg-soft { background-color: rgba(236, 72, 153, 0.12); }
+        .theme-femenil .theme-gradient { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: #fff; }
+        .theme-femenil .theme-border { border-color: rgba(236, 72, 153, 0.25); }
+        .theme-femenil .theme-text { color: #db2777; }
+        .theme-femenil .theme-bg-soft { background-color: rgba(236, 72, 153, 0.08); }
 
         /* Mixto: Verde LEXFA */
         body.theme-mixto {
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(34, 197, 94, 0.18) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(21, 128, 61, 0.08) 0%, transparent 40%);
+                radial-gradient(circle at 50% 0%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(21, 128, 61, 0.04) 0%, transparent 40%);
         }
-        .theme-mixto .theme-gradient { background: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #15803d 100%); color: #000; }
-        .theme-mixto .theme-border { border-color: rgba(34, 197, 94, 0.35); }
-        .theme-mixto .theme-text { color: #4ade80; }
-        .theme-mixto .theme-bg-soft { background-color: rgba(34, 197, 94, 0.12); }
+        .theme-mixto .theme-gradient { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: #fff; }
+        .theme-mixto .theme-border { border-color: rgba(34, 197, 94, 0.25); }
+        .theme-mixto .theme-text { color: #16a34a; }
+        .theme-mixto .theme-bg-soft { background-color: rgba(34, 197, 94, 0.08); }
 
-        /* Ajuste de tarjetas para fondo claro */
-        .dark-card {
+        .light-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #060d08; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
         .contenedor-logo img { width: 44px; height: 44px; object-fit: contain; display: block; }
 
@@ -118,8 +117,8 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '11.0',
-                currentTab: 'home', // Inicio como vista por defecto
+                DATA_VERSION: '12.0',
+                currentTab: 'home',
                 
                 selectedCategory: 'Varonil',
                 categories: ['Varonil', 'Femenil', 'Mixto'],
@@ -170,31 +169,23 @@
                     'Mixto': {}
                 },
 
-                // OBTENER LA RUTA DEL LOGO DEL EQUIPO (Limpia "Femenil" y "Mixto" para compartir el mismo logo)
+                // OBTENER LA RUTA DEL LOGO DEL EQUIPO (Comparte logo quitando Femenil/Mixto)
                 getTeamLogoUrl(teamName) {
-                    // 1. Quita las palabras 'Femenil' o 'Mixto' (case-insensitive)
                     let baseTeamName = teamName.replace(/femenil|mixto/gi, '').trim();
-                    
-                    // 2. Elimina espacios intermedios (ej: "Olympus " -> "Olympus")
                     const cleanName = baseTeamName.replace(/\s+/g, '');
-                    
-                    // 3. Devuelve la ruta en la carpeta logos/
                     return `logos/${cleanName}.png`;
                 },
 
-                // OBTENER INICIALES PARA LOGO RESERVA
                 getTeamInitials(name) {
                     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                 },
 
-                // IR A VER UN EQUIPO ESPECÍFICO
                 viewTeamStats(cat, team) {
                     this.selectedCategory = cat;
                     this.selectedTeam = team;
                     this.currentTab = 'table';
                 },
 
-                // IR A MVPS DE UNA CATEGORÍA
                 viewCategoryMVPs(cat) {
                     this.selectedCategory = cat;
                     this.currentTab = 'mvp';
@@ -513,30 +504,30 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="min-h-screen flex flex-col justify-between selection:bg-green-500 selection:text-black" 
+<body class="min-h-screen flex flex-col justify-between selection:bg-green-500 selection:text-white" 
       :class="'theme-' + selectedCategory.toLowerCase()" 
       x-data="lexfaHub">
 
     <!-- Header -->
-    <header class="border-b bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40 shadow-xl shadow-black/60 theme-border">
+    <header class="border-b bg-white/90 backdrop-blur-md sticky top-0 z-45 shadow-sm border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-3 cursor-pointer" @click="currentTab = 'home'">
                 <div class="contenedor-logo">
-                    <img src="/logo/lexfa.jpeg" alt="Lexfa Logo" class="w-11 h-11 object-contain rounded-lg">
+                    <img src="/logo/lexfa.jpeg" alt="Lexfa Logo" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=L&background=22c55e&color=fff';">
                 </div>
                 <div>
-                    <h1 class="font-brand font-black text-lg sm:text-xl text-white tracking-wider flex items-center gap-2">
+                    <h1 class="font-brand font-black text-lg sm:text-xl text-slate-900 tracking-wider flex items-center gap-2">
                         LEXFA FLAG MEX <span class="text-xs font-sans px-2 py-0.5 rounded-full font-bold theme-bg-soft theme-text border theme-border">2026</span>
                     </h1>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 flex-wrap justify-end">
-                <!-- Selector de Categoría (Oculto en vista Home) -->
-                <div class="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1" x-show="currentTab !== 'home'">
+                <!-- Selector de Categoría -->
+                <div class="flex bg-slate-100 border border-slate-200 rounded-xl p-1 gap-1" x-show="currentTab !== 'home'">
                     <template x-for="cat in categories" :key="cat">
                         <button @click="changeCategory(cat)" 
-                                :class="selectedCategory === cat ? 'theme-gradient font-extrabold shadow-md' : 'text-zinc-400 hover:text-white'" 
+                                :class="selectedCategory === cat ? 'theme-gradient font-extrabold shadow-sm' : 'text-slate-600 hover:text-slate-900'" 
                                 class="px-3 py-1 rounded-lg text-xs font-bold transition" 
                                 x-text="cat">
                         </button>
@@ -544,24 +535,24 @@
                 </div>
 
                 <!-- Selector de Equipos -->
-                <select x-model="selectedTeam" x-show="currentTab !== 'home'" class="bg-zinc-900 border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
+                <select x-model="selectedTeam" x-show="currentTab !== 'home'" class="bg-white border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer shadow-sm">
                     <template x-for="t in currentTeams" :key="t">
-                        <option :value="t" x-text="t" class="bg-zinc-900 text-white"></option>
+                        <option :value="t" x-text="t" class="bg-white text-slate-900"></option>
                     </template>
                 </select>
 
                 <!-- Jornada / Playoffs -->
-                <select x-model="selectedJornada" x-show="currentTab !== 'home'" class="bg-zinc-900 border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
-                    <option value="global" class="bg-zinc-900 theme-text font-bold">⭐ Global (Temporada)</option>
-                    <hr class="border-zinc-800">
+                <select x-model="selectedJornada" x-show="currentTab !== 'home'" class="bg-white border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer shadow-sm">
+                    <option value="global" class="bg-white theme-text font-bold">⭐ Global (Temporada)</option>
+                    <hr class="border-slate-200">
                     <template x-for="j in availableJornadas" :key="j">
-                        <option :value="String(j)" x-text="isNaN(j) ? j.toUpperCase() : 'Jornada ' + j" class="bg-zinc-900 text-white"></option>
+                        <option :value="String(j)" x-text="isNaN(j) ? j.toUpperCase() : 'Jornada ' + j" class="bg-white text-slate-900"></option>
                     </template>
                 </select>
 
                 <!-- Login / Logout Admin -->
                 <template x-if="isLoggedIn">
-                    <button @click="logoutAdmin()" class="bg-red-900/40 hover:bg-red-900 text-red-300 border border-red-500/40 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+                    <button @click="logoutAdmin()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
                         <i class="fa-solid fa-right-from-bracket"></i> Salir
                     </button>
                 </template>
@@ -575,7 +566,7 @@
     </header>
 
     <!-- Toast -->
-    <div x-show="showSuccessToast" x-transition class="fixed bottom-5 right-5 z-50 theme-gradient text-black font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 border border-white/20">
+    <div x-show="showSuccessToast" x-transition class="fixed bottom-5 right-5 z-50 theme-gradient font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 border border-white/20">
         <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
         <span>¡Datos sincronizados en la nube!</span>
     </div>
@@ -584,26 +575,26 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
         
         <!-- Pestañas de Navegación -->
-        <div class="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 mb-6 overflow-x-auto">
+        <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-6 overflow-x-auto">
             <div class="flex items-center gap-2">
-                <button @click="currentTab = 'home'" :class="currentTab === 'home' ? 'theme-gradient font-extrabold' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'home'" :class="currentTab === 'home' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-house"></i> Inicio
                 </button>
-                <button @click="currentTab = 'table'" :class="currentTab === 'table' ? 'theme-gradient font-extrabold' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'table'" :class="currentTab === 'table' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-table-list"></i> Tabla General
                 </button>
-                <button @click="currentTab = 'mvp'" :class="currentTab === 'mvp' ? 'theme-gradient font-extrabold' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'mvp'" :class="currentTab === 'mvp' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-trophy"></i> Líderes MVPs (<span x-text="selectedCategory"></span>)
                 </button>
-                <button @click="currentTab = 'cards'" :class="currentTab === 'cards' ? 'theme-gradient font-extrabold' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'cards'" :class="currentTab === 'cards' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-users"></i> Tarjetas
                 </button>
-                <button @click="currentTab = 'edit'" :class="currentTab === 'edit' ? 'theme-gradient font-extrabold' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                <button @click="currentTab = 'edit'" :class="currentTab === 'edit' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-pen-to-square"></i> Panel Admin
                 </button>
             </div>
 
-            <button @click="copyWhatsAppText()" x-show="currentTab !== 'home'" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-2 shrink-0">
+            <button @click="copyWhatsAppText()" x-show="currentTab !== 'home'" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-2 shrink-0 shadow-sm">
                 <i class="fa-brands fa-whatsapp text-lg"></i>
                 <span x-text="copied ? '¡Copiado!' : 'Reporte WhatsApp'"></span>
             </button>
@@ -615,25 +606,25 @@
         <div x-show="currentTab === 'home'" x-transition class="space-y-10">
             
             <!-- HERO BANNER -->
-            <div class="dark-card rounded-3xl p-6 sm:p-10 border theme-border relative overflow-hidden text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="light-card rounded-3xl p-6 sm:p-10 border theme-border relative overflow-hidden text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div class="max-w-xl space-y-3 z-10">
                     <span class="text-xs font-bold px-3 py-1 rounded-full theme-bg-soft theme-text border theme-border inline-block uppercase font-brand">Temporada Oficial 2026</span>
-                    <h2 class="font-brand font-black text-2xl sm:text-4xl text-white leading-tight">CENTRO DE ESTADÍSTICAS Y MVPs</h2>
-                    <p class="text-xs sm:text-sm text-zinc-400">Consulta los equipos participantes, las métricas acumuladas por jornada y los líderes individuales de la liga.</p>
+                    <h2 class="font-brand font-black text-2xl sm:text-4xl text-slate-900 leading-tight">CENTRO DE ESTADÍSTICAS Y MVPs</h2>
+                    <p class="text-xs sm:text-sm text-slate-600">Consulta los equipos participantes, las métricas acumuladas por jornada y los líderes individuales de la liga.</p>
                 </div>
 
                 <!-- ACCESOS RÁPIDOS A MVPs POR CATEGORÍA -->
                 <div class="flex flex-col gap-2 w-full sm:w-auto shrink-0 z-10">
-                    <span class="text-[10px] uppercase text-zinc-400 font-extrabold text-center sm:text-right">Ver Líderes MVPs:</span>
-                    <button @click="viewCategoryMVPs('Varonil')" class="bg-blue-600 hover:bg-blue-500 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
+                    <span class="text-[10px] uppercase text-slate-500 font-extrabold text-center sm:text-right">Ver Líderes MVPs:</span>
+                    <button @click="viewCategoryMVPs('Varonil')" class="bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
                         <span><i class="fa-solid fa-trophy mr-1"></i> MVPs Varonil</span>
                         <i class="fa-solid fa-chevron-right text-[10px]"></i>
                     </button>
-                    <button @click="viewCategoryMVPs('Femenil')" class="bg-pink-500 hover:bg-pink-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
+                    <button @click="viewCategoryMVPs('Femenil')" class="bg-pink-600 hover:bg-pink-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
                         <span><i class="fa-solid fa-trophy mr-1"></i> MVPs Femenil</span>
                         <i class="fa-solid fa-chevron-right text-[10px]"></i>
                     </button>
-                    <button @click="viewCategoryMVPs('Mixto')" class="bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
+                    <button @click="viewCategoryMVPs('Mixto')" class="bg-green-600 hover:bg-green-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
                         <span><i class="fa-solid fa-trophy mr-1"></i> MVPs Mixto</span>
                         <i class="fa-solid fa-chevron-right text-[10px]"></i>
                     </button>
@@ -643,12 +634,12 @@
             <!-- SECCIONES DE EQUIPOS POR CATEGORÍA -->
             <template x-for="cat in categories" :key="'home-' + cat">
                 <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
-                        <h3 class="font-brand font-black text-lg text-white flex items-center gap-2">
-                            <span class="w-3 h-3 rounded-full inline-block" :class="cat === 'Varonil' ? 'bg-blue-500' : (cat === 'Femenil' ? 'bg-pink-500' : 'bg-green-500')"></span>
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <h3 class="font-brand font-black text-lg text-slate-900 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full inline-block" :class="cat === 'Varonil' ? 'bg-blue-600' : (cat === 'Femenil' ? 'bg-pink-600' : 'bg-green-600')"></span>
                             Categoría <span x-text="cat"></span>
                         </h3>
-                        <button @click="viewCategoryMVPs(cat)" class="text-xs font-bold text-zinc-400 hover:text-white transition flex items-center gap-1">
+                        <button @click="viewCategoryMVPs(cat)" class="text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1">
                             Ver MVPs <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </button>
                     </div>
@@ -657,21 +648,19 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         <template x-for="team in teamsByCategory[cat]" :key="cat + '-' + team">
                             <div @click="viewTeamStats(cat, team)" 
-                                 class="dark-card p-4 rounded-2xl border border-zinc-800 hover:border-zinc-500 transition cursor-pointer text-center flex flex-col items-center justify-between group hover:scale-105">
+                                 class="light-card p-4 rounded-2xl border border-slate-200 hover:border-slate-400 transition cursor-pointer text-center flex flex-col items-center justify-between group hover:scale-105">
                                 
-                                <!-- LOGO O ESCUDO DEL EQUIPO -->
-                                <div class="w-20 h-20 rounded-2xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-center p-2 mb-3 relative overflow-hidden group-hover:border-zinc-600 shadow">
+                                <div class="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center p-2 mb-3 relative overflow-hidden group-hover:border-slate-300 shadow-sm">
                                     <img :src="getTeamLogoUrl(team)" 
                                          :alt="team" 
                                          class="max-w-full max-h-full object-contain"
                                          @error="$el.style.display='none'; $el.nextElementSibling.style.display='flex'">
                                     
-                                    <!-- RESCATISTA EN CASO DE NO TENER IMAGEN AÚN -->
-                                    <div class="hidden w-full h-full items-center justify-center font-brand font-black text-lg text-zinc-400" x-text="getTeamInitials(team)"></div>
+                                    <div class="hidden w-full h-full items-center justify-center font-brand font-black text-lg text-slate-500" x-text="getTeamInitials(team)"></div>
                                 </div>
 
-                                <h4 class="font-brand font-bold text-xs text-white group-hover:text-amber-400 transition" x-text="team"></h4>
-                                <span class="text-[10px] text-zinc-500 mt-1">Ver Estadísticas →</span>
+                                <h4 class="font-brand font-bold text-xs text-slate-800 group-hover:text-blue-600 transition" x-text="team"></h4>
+                                <span class="text-[10px] text-slate-500 mt-1">Ver Estadísticas →</span>
                             </div>
                         </template>
                     </div>
@@ -680,21 +669,21 @@
 
         </div>
 
-        <!-- BÚSQUEDA (Muestra en las vistas secundarias) -->
+        <!-- BÚSQUEDA -->
         <div class="mb-4" x-show="currentTab !== 'home'">
             <div class="relative max-w-md">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm"></i>
-                <input type="text" x-model="searchQuery" placeholder="Buscar jugador o número..." class="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" x-model="searchQuery" placeholder="Buscar jugador o número..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
             </div>
         </div>
 
         <!-- VISTA 1: TABLA GENERAL -->
         <div x-show="currentTab === 'table'" x-transition class="space-y-4">
-            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl theme-border">
+            <div class="light-card rounded-2xl overflow-hidden shadow-sm theme-border">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left text-zinc-300">
+                    <table class="w-full text-xs text-left text-slate-700">
                         <thead>
-                            <tr class="bg-zinc-900/90 text-zinc-400 text-[10px] uppercase border-b border-zinc-800 text-center font-bold">
+                            <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase border-b border-slate-200 text-center font-bold">
                                 <th class="py-3 px-4 text-left">#</th>
                                 <th class="py-3 px-4 text-left">Jugador</th>
                                 <th class="py-3 px-4 text-left">Posición</th>
@@ -704,16 +693,16 @@
                                 <th class="py-3 px-4 text-center theme-bg-soft theme-text">Sacks</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-800/60 font-medium">
+                        <tbody class="divide-y divide-slate-100 font-medium">
                             <template x-for="p in filteredPlayers" :key="p.num">
-                                <tr class="hover:bg-white/5 transition">
+                                <tr class="hover:bg-slate-50 transition">
                                     <td class="py-3 px-4 font-extrabold theme-text" x-text="'#' + p.num"></td>
-                                    <td class="py-3 px-4 font-bold text-white" x-text="p.name"></td>
-                                    <td class="py-3 px-4 text-zinc-400" x-text="p.pos"></td>
-                                    <td class="py-3 px-4 text-center font-bold" x-text="p.pasesTD || 0"></td>
-                                    <td class="py-3 px-4 text-center font-bold" x-text="p.td || 0"></td>
-                                    <td class="py-3 px-4 text-center font-bold" x-text="p.intercepcion || 0"></td>
-                                    <td class="py-3 px-4 text-center font-bold" x-text="p.sacks || 0"></td>
+                                    <td class="py-3 px-4 font-bold text-slate-900" x-text="p.name"></td>
+                                    <td class="py-3 px-4 text-slate-500" x-text="p.pos"></td>
+                                    <td class="py-3 px-4 text-center font-bold text-slate-800" x-text="p.pasesTD || 0"></td>
+                                    <td class="py-3 px-4 text-center font-bold text-slate-800" x-text="p.td || 0"></td>
+                                    <td class="py-3 px-4 text-center font-bold text-slate-800" x-text="p.intercepcion || 0"></td>
+                                    <td class="py-3 px-4 text-center font-bold text-slate-800" x-text="p.sacks || 0"></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -722,9 +711,9 @@
             </div>
         </div>
 
-        <!-- VISTA 2: LÍDERES MVPs POR CADA ESTADÍSTICA DE LA CATEGORÍA -->
+        <!-- VISTA 2: LÍDERES MVPs -->
         <div x-show="currentTab === 'mvp'" x-transition class="space-y-8">
-            <div class="theme-bg-soft border theme-border p-4 rounded-2xl text-xs theme-text flex items-center gap-3">
+            <div class="theme-bg-soft border theme-border p-4 rounded-2xl text-xs theme-text flex items-center gap-3 shadow-sm">
                 <i class="fa-solid fa-trophy text-2xl"></i>
                 <span>Líderes destacados (Top 6) en la categoría <strong><span x-text="selectedCategory"></span></strong> analizando a todos los equipos registrados.</span>
             </div>
@@ -736,49 +725,49 @@
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="(mvp, index) in top6PasesTD" :key="'pases-' + mvp.num + mvp.team">
-                        <div class="dark-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between">
+                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-black text-sm" x-text="'#' + (index + 1)"></span>
+                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
                                 <div>
-                                    <h4 class="font-black text-sm text-white" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-zinc-400" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
+                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
+                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <span class="block text-xl font-black theme-text" x-text="mvp.pasesTD"></span>
-                                <span class="text-[9px] uppercase text-zinc-500 font-bold">Pases TD</span>
+                                <span class="text-[9px] uppercase text-slate-400 font-bold">Pases TD</span>
                             </div>
                         </div>
                     </template>
                     <template x-if="top6PasesTD.length === 0">
-                        <div class="col-span-full py-4 text-zinc-500 italic text-xs">Sin registros de Pases TD en esta categoría.</div>
+                        <div class="col-span-full py-4 text-slate-400 italic text-xs">Sin registros de Pases TD en esta categoría.</div>
                     </template>
                 </div>
             </div>
 
-            <!-- SECCIÓN 2: TOUCHDOWNS (ANOTACIONES) -->
+            <!-- SECCIÓN 2: TOUCHDOWNS -->
             <div>
                 <h3 class="font-brand font-black text-sm uppercase theme-text mb-3 flex items-center gap-2">
                     <i class="fa-solid fa-bullseye"></i> Top 6 - Touchdowns (TDs Anotados)
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="(mvp, index) in top6Touchdowns" :key="'td-' + mvp.num + mvp.team">
-                        <div class="dark-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between">
+                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-black text-sm" x-text="'#' + (index + 1)"></span>
+                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
                                 <div>
-                                    <h4 class="font-black text-sm text-white" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-zinc-400" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
+                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
+                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <span class="block text-xl font-black theme-text" x-text="mvp.td"></span>
-                                <span class="text-[9px] uppercase text-zinc-500 font-bold">TDs</span>
+                                <span class="text-[9px] uppercase text-slate-400 font-bold">TDs</span>
                             </div>
                         </div>
                     </template>
                     <template x-if="top6Touchdowns.length === 0">
-                        <div class="col-span-full py-4 text-zinc-500 italic text-xs">Sin registros de Touchdowns en esta categoría.</div>
+                        <div class="col-span-full py-4 text-slate-400 italic text-xs">Sin registros de Touchdowns en esta categoría.</div>
                     </template>
                 </div>
             </div>
@@ -790,22 +779,22 @@
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="(mvp, index) in top6Intercepciones" :key="'int-' + mvp.num + mvp.team">
-                        <div class="dark-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between">
+                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-black text-sm" x-text="'#' + (index + 1)"></span>
+                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
                                 <div>
-                                    <h4 class="font-black text-sm text-white" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-zinc-400" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
+                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
+                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <span class="block text-xl font-black theme-text" x-text="mvp.intercepcion"></span>
-                                <span class="text-[9px] uppercase text-zinc-500 font-bold">INTs</span>
+                                <span class="text-[9px] uppercase text-slate-400 font-bold">INTs</span>
                             </div>
                         </div>
                     </template>
                     <template x-if="top6Intercepciones.length === 0">
-                        <div class="col-span-full py-4 text-zinc-500 italic text-xs">Sin registros de Intercepciones en esta categoría.</div>
+                        <div class="col-span-full py-4 text-slate-400 italic text-xs">Sin registros de Intercepciones en esta categoría.</div>
                     </template>
                 </div>
             </div>
@@ -817,22 +806,22 @@
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="(mvp, index) in top6Sacks" :key="'sack-' + mvp.num + mvp.team">
-                        <div class="dark-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between">
+                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-black text-sm" x-text="'#' + (index + 1)"></span>
+                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
                                 <div>
-                                    <h4 class="font-black text-sm text-white" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-zinc-400" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
+                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
+                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <span class="block text-xl font-black theme-text" x-text="mvp.sacks"></span>
-                                <span class="text-[9px] uppercase text-zinc-500 font-bold">Sacks</span>
+                                <span class="text-[9px] uppercase text-slate-400 font-bold">Sacks</span>
                             </div>
                         </div>
                     </template>
                     <template x-if="top6Sacks.length === 0">
-                        <div class="col-span-full py-4 text-zinc-500 italic text-xs">Sin registros de Sacks en esta categoría.</div>
+                        <div class="col-span-full py-4 text-slate-400 italic text-xs">Sin registros de Sacks en esta categoría.</div>
                     </template>
                 </div>
             </div>
@@ -843,57 +832,56 @@
         <div x-show="currentTab === 'cards'" class="space-y-6" x-transition>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <template x-for="p in filteredPlayers" :key="p.num">
-                    <div class="dark-card rounded-2xl p-5 hover:border-zinc-500 transition cursor-pointer relative overflow-hidden group" @click="selectedPlayer = p">
+                    <div class="light-card rounded-2xl p-5 border border-slate-200 hover:border-slate-400 transition cursor-pointer relative overflow-hidden group shadow-sm" @click="selectedPlayer = p">
                         <div class="flex items-center justify-between mb-3">
                             <span class="w-10 h-10 rounded-xl theme-bg-soft border theme-border flex items-center justify-center font-mono font-extrabold theme-text text-base" x-text="'#' + p.num"></span>
-                            <span class="text-xs px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 font-bold" x-text="p.pos"></span>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold" x-text="p.pos"></span>
                         </div>
-                        <h4 class="font-black text-lg text-white mb-3" x-text="p.name"></h4>
-                        <div class="grid grid-cols-2 gap-2 text-xs bg-zinc-950 p-2.5 rounded-xl border border-zinc-800/80">
-                            <div class="text-zinc-400">Pases TD: <strong class="theme-text" x-text="p.pasesTD || 0"></strong></div>
-                            <div class="text-zinc-400">TDs: <strong class="theme-text" x-text="p.td || 0"></strong></div>
-                            <div class="text-zinc-400">INTs: <strong class="theme-text" x-text="p.intercepcion || 0"></strong></div>
-                            <div class="text-zinc-400">Sacks: <strong class="theme-text" x-text="p.sacks || 0"></strong></div>
+                        <h4 class="font-black text-lg text-slate-900 mb-3" x-text="p.name"></h4>
+                        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <div class="text-slate-500">Pases TD: <strong class="theme-text" x-text="p.pasesTD || 0"></strong></div>
+                            <div class="text-slate-500">TDs: <strong class="theme-text" x-text="p.td || 0"></strong></div>
+                            <div class="text-slate-500">INTs: <strong class="theme-text" x-text="p.intercepcion || 0"></strong></div>
+                            <div class="text-slate-500">Sacks: <strong class="theme-text" x-text="p.sacks || 0"></strong></div>
                         </div>
                     </div>
                 </template>
             </div>
         </div>
 
-        <!-- VISTA 4: PANEL ADMIN / EDITAR DATOS -->
+        <!-- VISTA 4: PANEL ADMIN -->
         <div x-show="currentTab === 'edit'" x-transition class="space-y-6">
             
-            <!-- GESTIÓN DE ROSTER -->
-            <div class="dark-card p-5 rounded-2xl border theme-border">
+            <div class="light-card p-5 rounded-2xl border theme-border shadow-sm">
                 <h3 class="font-brand font-bold text-sm theme-text mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-users-gear"></i> Roster de: <span class="text-white underline" x-text="selectedTeam + ' (' + selectedCategory + ')'"></span>
+                    <i class="fa-solid fa-users-gear"></i> Roster de: <span class="text-slate-900 underline" x-text="selectedTeam + ' (' + selectedCategory + ')'"></span>
                 </h3>
 
                 <div class="flex flex-wrap gap-2 items-end mb-4">
                     <div>
-                        <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Número #</label>
-                        <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-20 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500">
+                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Número #</label>
+                        <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-20 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
                     </div>
                     <div class="flex-1 min-w-[150px]">
-                        <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Nombre Completo</label>
-                        <input type="text" x-model="newPlayerName" placeholder="Ej. Carlos Pérez" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500">
+                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nombre Completo</label>
+                        <input type="text" x-model="newPlayerName" placeholder="Ej. Carlos Pérez" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Posición</label>
-                        <input type="text" x-model="newPlayerPos" placeholder="Ej. QB / WR" class="w-32 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500">
+                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Posición</label>
+                        <input type="text" x-model="newPlayerPos" placeholder="Ej. QB / WR" class="w-32 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm">
                     </div>
-                    <button @click="addPlayerToTeam()" class="theme-gradient text-black font-extrabold text-xs px-4 py-2 rounded-xl shadow hover:scale-105 transition">
+                    <button @click="addPlayerToTeam()" class="theme-gradient text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-sm hover:scale-105 transition">
                         <i class="fa-solid fa-user-plus mr-1"></i> Agregar
                     </button>
                 </div>
 
                 <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1">
                     <template x-for="p in currentRoster" :key="p.num">
-                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs shadow-sm">
                             <span class="font-mono font-bold theme-text" x-text="'#' + p.num"></span>
-                            <span class="text-white font-medium" x-text="p.name"></span>
-                            <span class="text-zinc-500 text-[10px]" x-text="'(' + p.pos + ')'"></span>
-                            <button @click="removePlayerFromTeam(p.num)" class="text-red-400 hover:text-red-300 ml-2"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                            <span class="text-slate-800 font-medium" x-text="p.name"></span>
+                            <span class="text-slate-400 text-[10px]" x-text="'(' + p.pos + ')'"></span>
+                            <button @click="removePlayerFromTeam(p.num)" class="text-red-600 hover:text-red-500 ml-2"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
                         </div>
                     </template>
                 </div>
@@ -907,26 +895,26 @@
                 
                 <template x-if="isLoggedIn">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <button @click="addJornada()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs px-3 py-2 rounded-xl border border-zinc-700 transition">
+                        <button @click="addJornada()" class="bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs px-3 py-2 rounded-xl border border-slate-200 shadow-sm transition">
                             <i class="fa-solid fa-plus mr-1"></i> Nueva Jornada
                         </button>
                         <template x-if="selectedJornada !== 'global'">
-                            <button @click="deleteCurrentJornada()" class="bg-red-900/40 hover:bg-red-900 text-red-300 border border-red-500/40 font-bold text-xs px-3 py-2 rounded-xl transition">
+                            <button @click="deleteCurrentJornada()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-xs px-3 py-2 rounded-xl transition shadow-sm">
                                 <i class="fa-solid fa-trash-can mr-1"></i> Borrar Jornada
                             </button>
                         </template>
-                        <button @click="guardarCambiosAdmin()" class="theme-gradient text-black font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition">
+                        <button @click="guardarCambiosAdmin()" class="theme-gradient text-white font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-md hover:scale-105 transition">
                             <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Guardar en la Nube
                         </button>
                     </div>
                 </template>
             </div>
 
-            <div class="dark-card rounded-2xl overflow-hidden shadow-2xl theme-border">
+            <div class="light-card rounded-2xl overflow-hidden shadow-sm theme-border">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left text-zinc-300">
+                    <table class="w-full text-xs text-left text-slate-700">
                         <thead>
-                            <tr class="bg-zinc-900/90 text-zinc-400 text-[10px] uppercase border-b border-zinc-800 text-center font-bold">
+                            <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase border-b border-slate-200 text-center font-bold">
                                 <th class="py-3 px-4 text-left">#</th>
                                 <th class="py-3 px-4 text-left">Jugador</th>
                                 <th class="py-3 px-4 text-center theme-bg-soft theme-text">Pases de Anotación (Pases TD)</th>
@@ -935,45 +923,45 @@
                                 <th class="py-3 px-4 text-center theme-bg-soft theme-text">Sacks</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-800/60">
+                        <tbody class="divide-y divide-slate-100">
                             <template x-for="p in (selectedJornada === 'global' ? [] : currentJornadaEditablePlayers)" :key="p.num">
-                                <tr class="hover:bg-zinc-900/40">
+                                <tr class="hover:bg-slate-50">
                                     <td class="py-3 px-4 font-extrabold theme-text" x-text="'#' + p.num"></td>
-                                    <td class="py-3 px-4 font-bold text-white" x-text="currentRoster.find(r => String(r.num) === String(p.num))?.name || ''"></td>
+                                    <td class="py-3 px-4 font-bold text-slate-900" x-text="currentRoster.find(r => String(r.num) === String(p.num))?.name || ''"></td>
                                     
                                     <!-- Pases TD -->
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button @click="dec(p, 'pasesTD')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.pasesTD" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-zinc-500">
-                                            <button @click="inc(p, 'pasesTD')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-white hover:text-black font-bold text-xs">+</button>
+                                            <button @click="dec(p, 'pasesTD')" class="w-7 h-7 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">-</button>
+                                            <input type="number" x-model.number="p.pasesTD" min="0" class="w-12 bg-white border border-slate-200 rounded text-center py-1.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-slate-400 shadow-sm">
+                                            <button @click="inc(p, 'pasesTD')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-blue-600 hover:text-white font-bold text-xs transition">+</button>
                                         </div>
                                     </td>
 
                                     <!-- Touchdowns (TD) -->
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button @click="dec(p, 'td')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.td" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-zinc-500">
-                                            <button @click="inc(p, 'td')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-white hover:text-black font-bold text-xs">+</button>
+                                            <button @click="dec(p, 'td')" class="w-7 h-7 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">-</button>
+                                            <input type="number" x-model.number="p.td" min="0" class="w-12 bg-white border border-slate-200 rounded text-center py-1.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-slate-400 shadow-sm">
+                                            <button @click="inc(p, 'td')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-blue-600 hover:text-white font-bold text-xs transition">+</button>
                                         </div>
                                     </td>
 
                                     <!-- Intercepciones -->
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button @click="dec(p, 'intercepcion')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.intercepcion" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500">
-                                            <button @click="inc(p, 'intercepcion')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-white hover:text-black font-bold text-xs">+</button>
+                                            <button @click="dec(p, 'intercepcion')" class="w-7 h-7 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">-</button>
+                                            <input type="number" x-model.number="p.intercepcion" min="0" class="w-12 bg-white border border-slate-200 rounded text-center py-1.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-slate-400 shadow-sm">
+                                            <button @click="inc(p, 'intercepcion')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-blue-600 hover:text-white font-bold text-xs transition">+</button>
                                         </div>
                                     </td>
 
                                     <!-- Sacks -->
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button @click="dec(p, 'sacks')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.sacks" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-zinc-500">
-                                            <button @click="inc(p, 'sacks')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-white hover:text-black font-bold text-xs">+</button>
+                                            <button @click="dec(p, 'sacks')" class="w-7 h-7 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">-</button>
+                                            <input type="number" x-model.number="p.sacks" min="0" class="w-12 bg-white border border-slate-200 rounded text-center py-1.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-slate-400 shadow-sm">
+                                            <button @click="inc(p, 'sacks')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-blue-600 hover:text-white font-bold text-xs transition">+</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -981,7 +969,7 @@
                         </tbody>
                     </table>
                     <template x-if="selectedJornada === 'global'">
-                        <div class="p-8 text-center text-zinc-500 text-xs italic">
+                        <div class="p-8 text-center text-slate-400 text-xs italic">
                             Selecciona una jornada específica en la parte superior para editar las estadísticas individuales por partido.
                         </div>
                     </template>
@@ -992,38 +980,19 @@
     </main>
 
     <!-- MODAL LOGIN ADMIN -->
-    <div x-show="showLoginModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" @click.self="showLoginModal = false" x-cloak>
-        <div class="dark-card rounded-2xl max-w-sm w-full p-6 relative border theme-border shadow-2xl" @click.stop>
-            <button @click="showLoginModal = false" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 transition">
+    <div x-show="showLoginModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" @click.self="showLoginModal = false" x-cloak>
+        <div class="light-card rounded-2xl max-w-sm w-full p-6 relative border theme-border shadow-xl" @click.stop>
+            <button @click="showLoginModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 transition">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <div class="text-center mb-6">
-                <div class="w-12 h-12 rounded-2xl theme-bg-soft border theme-border flex items-center justify-center mx-auto mb-3 theme-text text-xl">
+                <div class="w-12 h-12 rounded-2xl theme-bg-soft border theme-border flex items-center justify-center mx-auto mb-3 theme-text text-xl shadow-sm">
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
-                <h3 class="font-brand font-black text-xl text-white">ACCESO DE ADMIN</h3>
-                <p class="text-xs text-zinc-400 mt-1">Ingresa credenciales de administrador</p>
+                <h3 class="font-brand font-black text-xl text-slate-900">ACCESO DE ADMIN</h3>
+                <p class="text-xs text-slate-500 mt-1">Ingresa credenciales de administrador</p>
             </div>
             <form @submit.prevent="loginAdmin()" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold theme-text mb-1 uppercase">Correo Admin</label>
-                    <input type="email" x-model="adminEmail" required placeholder="admin@lexfa.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-zinc-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold theme-text mb-1 uppercase">Contraseña</label>
-                    <input type="password" x-model="adminPassword" required placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-zinc-500">
-                </div>
-                <template x-if="loginError"><p class="text-xs text-red-400 font-bold text-center" x-text="loginError"></p></template>
-                <button type="submit" class="w-full theme-gradient text-black font-extrabold text-xs py-3 rounded-xl shadow-lg transition">Iniciar Sesión Admin</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="border-t border-zinc-800/80 bg-zinc-950 py-4 mt-8">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-xs text-zinc-500 font-medium">© 2026 <span class="theme-text font-bold font-brand">Lexfa Flag Mex</span> • Official Statistics Hub</p>
-        </div>
-    </footer>
-</body>
-</html>
+                    <input type="email" x-model="adminEmail" required placeholder="admin@lexfa.com" class="w-full bg-white border border-slate-200 rounded-xl px
