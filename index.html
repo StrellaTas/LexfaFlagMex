@@ -114,7 +114,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '18.0',
+                DATA_VERSION: '19.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 
@@ -147,7 +147,6 @@
                     'Mixto': []
                 },
 
-                // DATOS CÉDULA DE JUEGO (CAMPOS DESPLEGABLES Y VACÍOS)
                 cedula: {
                     jornada: '1',
                     fecha: new Date().toISOString().split('T')[0],
@@ -160,13 +159,12 @@
                     obsReferees: ''
                 },
 
-                // FORMULARIO DINÁMICO DE ANOTACIONES (PLAY BY PLAY)
                 nuevaAnotacion: {
                     equipo: '',
-                    numPass: '',  // QB que dio el pase
-                    numScore: '', // Jugador que anotó
-                    ptsTD: 6,     // Valor del TD
-                    ptsExtra: 0   // Puntos extra (0, 1, 2, 3)
+                    numPass: '',  
+                    numScore: '', 
+                    ptsTD: 6,     
+                    ptsExtra: 0   
                 },
 
                 anotacionesRegistradas: [],
@@ -181,7 +179,43 @@
                     'Mixto': {}
                 },
 
-                // OBTENER ROSTER DEL EQUIPO SELECCIONADO PARA LA ANOTACIÓN
+                // BUSCA SI EXISTE UN PARTIDO REGISTRADO Y RECOMPONE LOS DATOS O LIMPIA LA CÉDULA
+                checkAndLoadExistingMatch() {
+                    const matches = this.matchesHistory[this.selectedCategory] || [];
+                    const loc = this.cedula.equipoLocal;
+                    const vis = this.cedula.equipoVisita;
+                    const j = String(this.cedula.jornada);
+
+                    if (loc && vis && loc !== vis) {
+                        const matchIndex = matches.findIndex(m => 
+                            String(m.jornada) === j && 
+                            m.equipoLocal === loc && 
+                            m.equipoVisita === vis
+                        );
+
+                        if (matchIndex !== -1) {
+                            const match = matches[matchIndex];
+                            this.cedula.fecha = match.fecha || new Date().toISOString().split('T')[0];
+                            this.cedula.campo = match.campo || 'Campo 1';
+                            this.cedula.marcadorLocal = Number(match.marcadorLocal || 0);
+                            this.cedula.marcadorVisita = Number(match.marcadorVisita || 0);
+                            this.cedula.obsReferees = match.obsReferees || '';
+                            this.anotacionesRegistradas = match.anotaciones ? JSON.parse(JSON.stringify(match.anotaciones)) : [];
+                        } else {
+                            // Si es un partido nuevo
+                            this.cedula.marcadorLocal = 0;
+                            this.cedula.marcadorVisita = 0;
+                            this.cedula.obsReferees = '';
+                            this.anotacionesRegistradas = [];
+                        }
+                    } else {
+                        // Si no hay ambos equipos definidos
+                        this.cedula.marcadorLocal = 0;
+                        this.cedula.marcadorVisita = 0;
+                        this.anotacionesRegistradas = [];
+                    }
+                },
+
                 get rosterEquipoAnotador() {
                     if (!this.nuevaAnotacion.equipo) return [];
                     const catData = this.teamsData[this.selectedCategory] || {};
@@ -189,7 +223,6 @@
                     return (teamObj && teamObj.roster) ? teamObj.roster : [];
                 },
 
-                // AGREGAR ANOTACIÓN AL PARTIDO Y ACTUALIZAR ESTADÍSTICAS Y MARCADOR
                 agregarAnotacion() {
                     if (!this.nuevaAnotacion.equipo) {
                         alert("Selecciona el equipo que realizó la anotación.");
@@ -203,14 +236,12 @@
                     const eq = this.nuevaAnotacion.equipo;
                     const totalPts = Number(this.nuevaAnotacion.ptsTD || 0) + Number(this.nuevaAnotacion.ptsExtra || 0);
 
-                    // Actualizar marcador automático según si es local o visita
                     if (eq === this.cedula.equipoLocal) {
                         this.cedula.marcadorLocal = Number(this.cedula.marcadorLocal || 0) + totalPts;
                     } else if (eq === this.cedula.equipoVisita) {
                         this.cedula.marcadorVisita = Number(this.cedula.marcadorVisita || 0) + totalPts;
                     }
 
-                    // Registrar en la lista
                     this.anotacionesRegistradas.push({
                         equipo: eq,
                         numPass: this.nuevaAnotacion.numPass || 'N/A',
@@ -220,7 +251,6 @@
                         totalPts: totalPts
                     });
 
-                    // Cargar estadísticas individuales en el equipo correspondiente
                     this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numScore, 'td', 1);
                     if (this.nuevaAnotacion.ptsExtra > 0) {
                         this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numScore, 'extra', Number(this.nuevaAnotacion.ptsExtra));
@@ -229,7 +259,6 @@
                         this.incrementarEstadisticaJugador(eq, this.nuevaAnotacion.numPass, 'pasesTD', 1);
                     }
 
-                    // Limpiar formulario de anotación
                     this.nuevaAnotacion.numPass = '';
                     this.nuevaAnotacion.numScore = '';
                     this.nuevaAnotacion.ptsTD = 6;
@@ -336,6 +365,7 @@
                     if (teams.length > 0) {
                         this.selectedTeam = teams[0];
                     }
+                    this.checkAndLoadExistingMatch();
                 },
 
                 get currentRoster() {
@@ -358,25 +388,6 @@
                         this.teamsData[this.selectedCategory][this.selectedTeam].jornadas = {};
                     }
                     return this.teamsData[this.selectedCategory][this.selectedTeam].jornadas;
-                },
-
-                get cedulaEditablePlayers() {
-                    const jKey = this.cedula.jornada;
-                    if (!jKey) return [];
-                    const teamJornadas = this.currentTeamJornadas;
-                    if (!teamJornadas[jKey]) {
-                        teamJornadas[jKey] = [];
-                    }
-                    const list = teamJornadas[jKey];
-
-                    return this.currentRoster.map(rPlayer => {
-                        let pData = list.find(p => String(p.num) === String(rPlayer.num));
-                        if (!pData) {
-                            pData = { num: rPlayer.num, pasesTD: 0, td: 0, extra: 0, intercepcion: 0, sacks: 0 };
-                            list.push(pData);
-                        }
-                        return pData;
-                    });
                 },
 
                 addPlayerToTeam() {
@@ -564,7 +575,18 @@
                         this.matchesHistory[this.selectedCategory] = [];
                     }
 
-                    this.matchesHistory[this.selectedCategory].push({
+                    const matches = this.matchesHistory[this.selectedCategory];
+                    const j = String(this.cedula.jornada);
+                    const loc = this.cedula.equipoLocal;
+                    const vis = this.cedula.equipoVisita;
+
+                    const matchIndex = matches.findIndex(m => 
+                        String(m.jornada) === j && 
+                        m.equipoLocal === loc && 
+                        m.equipoVisita === vis
+                    );
+
+                    const matchData = {
                         jornada: this.cedula.jornada,
                         fecha: this.cedula.fecha,
                         campo: this.cedula.campo,
@@ -574,7 +596,13 @@
                         marcadorVisita: Number(this.cedula.marcadorVisita || 0),
                         obsReferees: this.cedula.obsReferees,
                         anotaciones: this.anotacionesRegistradas
-                    });
+                    };
+
+                    if (matchIndex !== -1) {
+                        matches[matchIndex] = matchData;
+                    } else {
+                        matches.push(matchData);
+                    }
 
                     this.saveToFirebase(true);
                 }
@@ -1034,9 +1062,7 @@
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- CÉDULA DE JUEGO MEJORADA (LISTAS DESPLEGABLES Y CARGA DINÁMICA) -->
-        <!-- ========================================================= -->
+        <!-- CÉDULA DE JUEGO / ADMIN -->
         <div x-show="currentTab === 'edit'" x-transition class="space-y-8">
             <div class="light-card p-6 rounded-3xl border border-slate-300 shadow-md space-y-6">
                 
@@ -1058,12 +1084,11 @@
                     </template>
                 </div>
 
-                <!-- ENCABEZADO CÉDULA CON JORNADAS Y CATEGORÍAS -->
+                <!-- ENCABEZADO CÉDULA CON DISPARADOR DE BÚSQUEDA AUTOMÁTICA DE PARTIDO -->
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Jornada</label>
-                        <!-- LISTA DESPLEGABLE DE JORNADAS -->
-                        <select x-model="cedula.jornada" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-slate-900 cursor-pointer">
+                        <select x-model="cedula.jornada" @change="checkAndLoadExistingMatch()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-slate-900 cursor-pointer">
                             <template x-for="j in availableJornadas" :key="'jornada-opt-' + j">
                                 <option :value="j" x-text="isNaN(j) ? j.toUpperCase() : 'Jornada ' + j"></option>
                             </template>
@@ -1087,7 +1112,7 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN MARCADOR CON EQUIPOS EN BLANCO Y LISTAS DESPLEGABLES -->
+                <!-- SECCIÓN MARCADOR CON BÚSQUEDA AUTOMÁTICA EN @CHANGE -->
                 <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
                     <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5 text-xs">
                         <i class="fa-solid fa-trophy theme-text"></i> Selección de Equipos del Partido
@@ -1095,7 +1120,7 @@
                     <div class="flex items-center gap-3">
                         <div class="w-1/2">
                             <label class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Equipo Local</label>
-                            <select x-model="cedula.equipoLocal" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs cursor-pointer shadow-sm">
+                            <select x-model="cedula.equipoLocal" @change="checkAndLoadExistingMatch()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs cursor-pointer shadow-sm">
                                 <option value="">-- Seleccionar Local --</option>
                                 <template x-for="t in currentTeams" :key="'loc-' + t">
                                     <option :value="t" x-text="t"></option>
@@ -1109,7 +1134,7 @@
 
                         <div class="w-1/2">
                             <label class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Equipo Visita</label>
-                            <select x-model="cedula.equipoVisita" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs cursor-pointer shadow-sm">
+                            <select x-model="cedula.equipoVisita" @change="checkAndLoadExistingMatch()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs cursor-pointer shadow-sm">
                                 <option value="">-- Seleccionar Visita --</option>
                                 <template x-for="t in currentTeams" :key="'vis-' + t">
                                     <option :value="t" x-text="t"></option>
@@ -1119,7 +1144,7 @@
                     </div>
                 </div>
 
-                <!-- MÓDULO DE REGISTRO RÁPIDO DE ANOTACIONES (PLAY BY PLAY) -->
+                <!-- CAPTURADOR DE ANOTACIONES -->
                 <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm bg-white">
                     <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
                         <span>CAPTURADOR DE ANOTACIONES (TDs Y CONVERSIONES)</span>
@@ -1160,7 +1185,6 @@
                             <div>
                                 <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Valor Anotación</label>
                                 <select x-model.number="nuevaAnotacion.ptsTD" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
-                                    <option value="0">No Aplica</option>
                                     <option value="6">Touchdown (6 Puntos)</option>
                                     <option value="2">Safety (2 Puntos)</option>
                                 </select>
@@ -1169,9 +1193,10 @@
                             <div>
                                 <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Punto Extra</label>
                                 <select x-model.number="nuevaAnotacion.ptsExtra" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold cursor-pointer">
-                                    <option value="0">No Aplica</option>
+                                    <option value="0">No Aplica / Fallado (0 pts)</option>
                                     <option value="1">Conversión +1 Punto</option>
                                     <option value="2">Conversión +2 Puntos</option>
+                                    <option value="3">Conversión +3 Puntos</option>
                                 </select>
                             </div>
                         </div>
@@ -1183,7 +1208,7 @@
                         </div>
                     </div>
 
-                    <!-- HISTORIAL DE ANOTACIONES DEL PARTIDO -->
+                    <!-- HISTORIAL DE ANOTACIONES REGISTRADAS -->
                     <div class="p-4">
                         <h5 class="text-[11px] font-bold text-slate-500 uppercase mb-2">Anotaciones registradas en esta Cédula:</h5>
                         <div class="space-y-1.5 max-h-40 overflow-y-auto">
