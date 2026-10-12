@@ -117,8 +117,8 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '10.0',
-                currentTab: 'table',
+                DATA_VERSION: '11.0',
+                currentTab: 'home', // Inicio como vista por defecto
                 
                 selectedCategory: 'Varonil',
                 categories: ['Varonil', 'Femenil', 'Mixto'],
@@ -169,6 +169,30 @@
                     'Mixto': {}
                 },
 
+                // OBTENER LA RUTA DEL LOGO DEL EQUIPO O UN FALLBACK
+                getTeamLogoUrl(teamName) {
+                    const cleanName = teamName.replace(/\s+/g, '');
+                    return `logos/${cleanName}.png`;
+                },
+
+                // OBTENER INICIALES PARA LOGO RESERVA
+                getTeamInitials(name) {
+                    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                },
+
+                // IR A VER UN EQUIPO ESPECÍFICO
+                viewTeamStats(cat, team) {
+                    this.selectedCategory = cat;
+                    this.selectedTeam = team;
+                    this.currentTab = 'table';
+                },
+
+                // IR A MVPS DE UNA CATEGORÍA
+                viewCategoryMVPs(cat) {
+                    this.selectedCategory = cat;
+                    this.currentTab = 'mvp';
+                },
+
                 get currentTeams() {
                     return this.teamsByCategory[this.selectedCategory] || [];
                 },
@@ -203,7 +227,6 @@
                     return this.teamsData[this.selectedCategory][this.selectedTeam].jornadas;
                 },
 
-                // ASEGURA QUE CUALQUIER JUGADOR NUEVO EN EL ROSTER APAREZCA EN LA JORNADA SELECCIONADA
                 get currentJornadaEditablePlayers() {
                     if (this.selectedJornada === 'global') return [];
                     const teamJornadas = this.currentTeamJornadas;
@@ -212,7 +235,6 @@
                     }
                     const list = teamJornadas[this.selectedJornada];
 
-                    // Sincroniza el roster con los jugadores de esta jornada
                     return this.currentRoster.map(rPlayer => {
                         let pData = list.find(p => String(p.num) === String(rPlayer.num));
                         if (!pData) {
@@ -278,7 +300,6 @@
                     }
                 },
 
-                // COMPILA TODOS LOS JUGADORES DE TODOS LOS EQUIPOS DE LA CATEGORÍA ACTUAL
                 get allCategoryPlayersConsolidated() {
                     let playersList = [];
                     const teamsInCat = this.teamsByCategory[this.selectedCategory] || [];
@@ -307,7 +328,6 @@
                     return playersList;
                 },
 
-                // LÍDERES TOP 6 POR CADA ESTADÍSTICA INDIVIDUAL
                 get top6PasesTD() {
                     return [...this.allCategoryPlayersConsolidated]
                         .filter(p => p.pasesTD > 0)
@@ -493,7 +513,7 @@
     <!-- Header -->
     <header class="border-b bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40 shadow-xl shadow-black/60 theme-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 cursor-pointer" @click="currentTab = 'home'">
                 <div class="contenedor-logo">
                     <img src="Olympus.png" alt="Lexfa Logo" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=L&background=22c55e&color=fff';">
                 </div>
@@ -505,8 +525,8 @@
             </div>
 
             <div class="flex items-center gap-2 flex-wrap justify-end">
-                <!-- Selector de Categoría (Colores Dinámicos) -->
-                <div class="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
+                <!-- Selector de Categoría (Oculto en vista Home) -->
+                <div class="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1" x-show="currentTab !== 'home'">
                     <template x-for="cat in categories" :key="cat">
                         <button @click="changeCategory(cat)" 
                                 :class="selectedCategory === cat ? 'theme-gradient font-extrabold shadow-md' : 'text-zinc-400 hover:text-white'" 
@@ -516,15 +536,15 @@
                     </template>
                 </div>
 
-                <!-- Equipos -->
-                <select x-model="selectedTeam" class="bg-zinc-900 border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
+                <!-- Selector de Equipos -->
+                <select x-model="selectedTeam" x-show="currentTab !== 'home'" class="bg-zinc-900 border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
                     <template x-for="t in currentTeams" :key="t">
                         <option :value="t" x-text="t" class="bg-zinc-900 text-white"></option>
                     </template>
                 </select>
 
                 <!-- Jornada / Playoffs -->
-                <select x-model="selectedJornada" class="bg-zinc-900 border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
+                <select x-model="selectedJornada" x-show="currentTab !== 'home'" class="bg-zinc-900 border theme-border theme-text text-xs sm:text-sm font-bold rounded-xl px-3 py-1.5 focus:outline-none cursor-pointer">
                     <option value="global" class="bg-zinc-900 theme-text font-bold">⭐ Global (Temporada)</option>
                     <hr class="border-zinc-800">
                     <template x-for="j in availableJornadas" :key="j">
@@ -556,9 +576,12 @@
     <!-- Contenido Principal -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
         
-        <!-- Pestañas -->
+        <!-- Pestañas de Navegación -->
         <div class="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 mb-6 overflow-x-auto">
             <div class="flex items-center gap-2">
+                <button @click="currentTab = 'home'" :class="currentTab === 'home' ? 'theme-gradient font-extrabold' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-house"></i> Inicio
+                </button>
                 <button @click="currentTab = 'table'" :class="currentTab === 'table' ? 'theme-gradient font-extrabold' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-table-list"></i> Tabla General
                 </button>
@@ -573,14 +596,85 @@
                 </button>
             </div>
 
-            <button @click="copyWhatsAppText()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-2 shrink-0">
+            <button @click="copyWhatsAppText()" x-show="currentTab !== 'home'" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-2 shrink-0">
                 <i class="fa-brands fa-whatsapp text-lg"></i>
                 <span x-text="copied ? '¡Copiado!' : 'Reporte WhatsApp'"></span>
             </button>
         </div>
 
-        <!-- Búsqueda -->
-        <div class="mb-4">
+        <!-- ========================================================= -->
+        <!-- VISTA HOME / LANDING PAGE -->
+        <!-- ========================================================= -->
+        <div x-show="currentTab === 'home'" x-transition class="space-y-10">
+            
+            <!-- HERO BANNER -->
+            <div class="dark-card rounded-3xl p-6 sm:p-10 border theme-border relative overflow-hidden text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div class="max-w-xl space-y-3 z-10">
+                    <span class="text-xs font-bold px-3 py-1 rounded-full theme-bg-soft theme-text border theme-border inline-block uppercase font-brand">Temporada Oficial 2026</span>
+                    <h2 class="font-brand font-black text-2xl sm:text-4xl text-white leading-tight">CENTRO DE ESTADÍSTICAS Y MVPs</h2>
+                    <p class="text-xs sm:text-sm text-zinc-400">Consulta los equipos participantes, las métricas acumuladas por jornada y los líderes individuales de la liga.</p>
+                </div>
+
+                <!-- ACCESOS RÁPIDOS A MVPs POR CATEGORÍA -->
+                <div class="flex flex-col gap-2 w-full sm:w-auto shrink-0 z-10">
+                    <span class="text-[10px] uppercase text-zinc-400 font-extrabold text-center sm:text-right">Ver Líderes MVPs:</span>
+                    <button @click="viewCategoryMVPs('Varonil')" class="bg-blue-600 hover:bg-blue-500 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
+                        <span><i class="fa-solid fa-trophy mr-1"></i> MVPs Varonil</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                    <button @click="viewCategoryMVPs('Femenil')" class="bg-pink-500 hover:bg-pink-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
+                        <span><i class="fa-solid fa-trophy mr-1"></i> MVPs Femenil</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                    <button @click="viewCategoryMVPs('Mixto')" class="bg-green-500 hover:bg-green-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center justify-between gap-3">
+                        <span><i class="fa-solid fa-trophy mr-1"></i> MVPs Mixto</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECCIONES DE EQUIPOS POR CATEGORÍA -->
+            <template x-for="cat in categories" :key="'home-' + cat">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                        <h3 class="font-brand font-black text-lg text-white flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full inline-block" :class="cat === 'Varonil' ? 'bg-blue-500' : (cat === 'Femenil' ? 'bg-pink-500' : 'bg-green-500')"></span>
+                            Categoría <span x-text="cat"></span>
+                        </h3>
+                        <button @click="viewCategoryMVPs(cat)" class="text-xs font-bold text-zinc-400 hover:text-white transition flex items-center gap-1">
+                            Ver MVPs <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- CUADRÍCULA DE LOGOS Y TARJETAS DE EQUIPOS -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <template x-for="team in teamsByCategory[cat]" :key="cat + '-' + team">
+                            <div @click="viewTeamStats(cat, team)" 
+                                 class="dark-card p-4 rounded-2xl border border-zinc-800 hover:border-zinc-500 transition cursor-pointer text-center flex flex-col items-center justify-between group hover:scale-105">
+                                
+                                <!-- LOGO O ESCUDO DEL EQUIPO -->
+                                <div class="w-20 h-20 rounded-2xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-center p-2 mb-3 relative overflow-hidden group-hover:border-zinc-600 shadow">
+                                    <img :src="getTeamLogoUrl(team)" 
+                                         :alt="team" 
+                                         class="max-w-full max-h-full object-contain"
+                                         @error="$el.style.display='none'; $el.nextElementSibling.style.display='flex'">
+                                    
+                                    <!-- RESCATISTA EN CASO DE NO TENER IMAGEN AÚN -->
+                                    <div class="hidden w-full h-full items-center justify-center font-brand font-black text-lg text-zinc-400" x-text="getTeamInitials(team)"></div>
+                                </div>
+
+                                <h4 class="font-brand font-bold text-xs text-white group-hover:text-amber-400 transition" x-text="team"></h4>
+                                <span class="text-[10px] text-zinc-500 mt-1">Ver Estadísticas →</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+        </div>
+
+        <!-- BÚSQUEDA (Muestra en las vistas secundarias) -->
+        <div class="mb-4" x-show="currentTab !== 'home'">
             <div class="relative max-w-md">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm"></i>
                 <input type="text" x-model="searchQuery" placeholder="Buscar jugador o número..." class="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
@@ -835,7 +929,6 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-800/60">
-                            <!-- Se usa currentJornadaEditablePlayers para que los jugadores nuevos aparezcan en cualquier jornada -->
                             <template x-for="p in (selectedJornada === 'global' ? [] : currentJornadaEditablePlayers)" :key="p.num">
                                 <tr class="hover:bg-zinc-900/40">
                                     <td class="py-3 px-4 font-extrabold theme-text" x-text="'#' + p.num"></td>
@@ -863,7 +956,7 @@
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button @click="dec(p, 'intercepcion')" class="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">-</button>
-                                            <input type="number" x-model.number="p.intercepcion" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white font-bold focus:outline-none focus:border-zinc-500">
+                                            <input type="number" x-model.number="p.intercepcion" min="0" class="w-12 bg-zinc-950 border border-zinc-800 rounded text-center py-1.5 text-xs text-white focus:outline-none focus:border-zinc-500">
                                             <button @click="inc(p, 'intercepcion')" class="w-7 h-7 rounded theme-bg-soft theme-text hover:bg-white hover:text-black font-bold text-xs">+</button>
                                         </div>
                                     </td>
