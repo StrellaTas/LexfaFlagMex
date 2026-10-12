@@ -203,7 +203,8 @@
                             if (data.jornadasData) this.jornadasData = data.jornadasData;
                             if (data.teams) this.teams = data.teams;
                         } else {
-                            this.saveToFirebase(false);
+                            // Si la BD está vacía, no intentamos escribir automáticamente 
+                            // para evitar el error de permisos a los visitantes.
                         }
                     });
                 }
@@ -211,6 +212,13 @@
 
             // Guardar cambios en la base de datos de la liga
             saveToFirebase(showToast = true) {
+                if (!this.isLoggedIn) {
+                    if (showToast) {
+                        this.showLoginModal = true;
+                    }
+                    return;
+                }
+
                 if (db) {
                     db.ref('lexfa_stats').set({
                         jornadasData: this.jornadasData,
@@ -222,7 +230,7 @@
                         }
                     }).catch((error) => {
                         console.error("Error al guardar en Firebase:", error);
-                        alert("Permiso denegado. Inicia sesión como administrador/coach.");
+                        alert("Error de permisos al guardar en la nube.");
                     });
                 }
             },
