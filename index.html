@@ -122,11 +122,11 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '25.0',
+                DATA_VERSION: '26.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 statsSubTab: 'players', 
-                adminSubTab: 'cedula', // Sub-pestaña interna para el panel de Admin ('cedula' o 'rosters')
+                adminSubTab: 'cedula',
                 
                 selectedCategory: 'Varonil',
                 categories: ['Varonil', 'Femenil', 'Mixto'],
@@ -145,7 +145,6 @@
                 searchQuery: '',
                 showSuccessToast: false,
                 toastMessage: '¡Sincronizado con Firebase correctamente!',
-                copied: false,
                 selectedPlayer: null,
                 
                 isLoggedIn: false,
@@ -194,9 +193,12 @@
                 sacksRegistrados: [],
                 intercepcionesRegistradas: [],
 
+                // Campos para Gestión de Rosters (con soporte de Edición y Foto)
+                editingPlayerOriginalNum: null,
                 newPlayerNum: '',
                 newPlayerName: '',
                 newPlayerPos: '',
+                newPlayerPhoto: '',
 
                 teamsData: {
                     'Varonil': {},
@@ -283,6 +285,7 @@
                             num: p.num,
                             name: p.name,
                             pos: p.pos,
+                            photo: p.photo || '',
                             pasesTD: Number(pData.pasesTD || 0),
                             td: Number(pData.td || 0),
                             extra: Number(pData.extra || 0),
@@ -505,16 +508,67 @@
                     return this.teamsData[this.selectedCategory][this.selectedTeam].jornadas;
                 },
 
-                addPlayerToTeam() {
+                addOrUpdatePlayerToTeam() {
                     if (!this.isLoggedIn) { this.showLoginModal = true; return; }
                     if (!this.newPlayerNum || !this.newPlayerName) { alert("Ingresa número y nombre."); return; }
+                    
                     const roster = this.currentRoster;
-                    if (roster.some(p => String(p.num) === String(this.newPlayerNum))) {
-                        alert("El número de camiseta ya existe en este equipo."); return;
+
+                    // Si estamos editando un jugador existente
+                    if (this.editingPlayerOriginalNum !== null) {
+                        const index = roster.findIndex(p => String(p.num) === String(this.editingPlayerOriginalNum));
+                        if (index !== -1) {
+                            roster[index].num = String(this.newPlayerNum);
+                            roster[index].name = this.newPlayerName;
+                            roster[index].pos = this.newPlayerPos || 'Jugador';
+                            roster[index].photo = this.newPlayerPhoto || '';
+                        }
+                        this.cancelEditPlayer();
+                    } else {
+                        // Alta de nuevo jugador
+                        if (roster.some(p => String(p.num) === String(this.newPlayerNum))) {
+                            alert("El número de camiseta ya existe en este equipo."); return;
+                        }
+                        roster.push({ 
+                            num: String(this.newPlayerNum), 
+                            name: this.newPlayerName, 
+                            pos: this.newPlayerPos || 'Jugador',
+                            photo: this.newPlayerPhoto || ''
+                        });
+                        this.newPlayerNum = ''; 
+                        this.newPlayerName = ''; 
+                        this.newPlayerPos = '';
+                        this.newPlayerPhoto = '';
                     }
-                    roster.push({ num: String(this.newPlayerNum), name: this.newPlayerName, pos: this.newPlayerPos || 'Jugador' });
-                    this.newPlayerNum = ''; this.newPlayerName = ''; this.newPlayerPos = '';
                     this.saveToFirebase(true);
+                },
+
+                editPlayerInTeam(p) {
+                    if (!this.isLoggedIn) { this.showLoginModal = true; return; }
+                    this.editingPlayerOriginalNum = p.num;
+                    this.newPlayerNum = p.num;
+                    this.newPlayerName = p.name;
+                    this.newPlayerPos = p.pos;
+                    this.newPlayerPhoto = p.photo || '';
+                },
+
+                cancelEditPlayer() {
+                    this.editingPlayerOriginalNum = null;
+                    this.newPlayerNum = '';
+                    this.newPlayerName = '';
+                    this.newPlayerPos = '';
+                    this.newPlayerPhoto = '';
+                },
+
+                handlePlayerPhotoUpload(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.newPlayerPhoto = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
                 },
 
                 removePlayerFromTeam(num) {
@@ -531,7 +585,7 @@
 
                     if (this.selectedJornada === 'global') {
                         return roster.map(rPlayer => {
-                            let agg = { num: rPlayer.num, name: rPlayer.name, pos: rPlayer.pos, pasesTD: 0, td: 0, extra: 0, intercepcion: 0, sacks: 0 };
+                            let agg = { num: rPlayer.num, name: rPlayer.name, pos: rPlayer.pos, photo: rPlayer.photo || '', pasesTD: 0, td: 0, extra: 0, intercepcion: 0, sacks: 0 };
                             this.availableJornadas.forEach(jKey => {
                                 const list = teamJornadas[jKey] || [];
                                 const pData = list.find(p => String(p.num) === String(rPlayer.num));
@@ -553,6 +607,7 @@
                                 num: rPlayer.num,
                                 name: rPlayer.name,
                                 pos: rPlayer.pos,
+                                photo: rPlayer.photo || '',
                                 pasesTD: Number(pData.pasesTD || 0),
                                 td: Number(pData.td || 0),
                                 extra: Number(pData.extra || 0),
@@ -572,7 +627,7 @@
                         const teamObj = catData[teamName];
                         if (teamObj && teamObj.roster && teamObj.jornadas) {
                             teamObj.roster.forEach(rPlayer => {
-                                let stats = { num: rPlayer.num, name: rPlayer.name, pos: rPlayer.pos, team: teamName, pasesTD: 0, td: 0, intercepcion: 0, sacks: 0 };
+                                let stats = { num: rPlayer.num, name: rPlayer.name, pos: rPlayer.pos, photo: rPlayer.photo || '', team: teamName, pasesTD: 0, td: 0, intercepcion: 0, sacks: 0 };
                                 
                                 Object.keys(teamObj.jornadas).forEach(jKey => {
                                     const list = teamObj.jornadas[jKey] || [];
@@ -821,7 +876,6 @@
                 <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-chart-bar"></i> Estadísticas
                 </button>
-                <!-- Nueva Pestaña Principal: Admin -->
                 <button @click="currentTab = 'admin'" :class="currentTab === 'admin' ? 'theme-gradient font-extrabold shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-user-shield"></i> Admin
                 </button>
@@ -905,7 +959,7 @@
                     </div>
 
                     <div class="flex items-center gap-3 flex-wrap">
-                        <button @click="fetchCloudData(true)" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5" title="Sincronizar y actualizar datos desde Firebase">
+                        <button @click="fetchCloudData(true)" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5">
                             <i class="fa-solid fa-arrows-rotate fa-spin-hover theme-text"></i> Sincronizar Datos
                         </button>
 
@@ -920,7 +974,7 @@
                     </div>
                 </div>
 
-                <!-- LISTA DE PARTIDOS EN LA JORNADA SELECCIONADA -->
+                <!-- LISTA DE PARTIDOS -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="match in matchesForSelectedJornada" :key="'m-' + match.jornada + '-' + match.equipoLocal + '-' + match.equipoVisita">
                         <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:border-slate-300 transition flex flex-col justify-between gap-4">
@@ -931,7 +985,6 @@
                             </div>
 
                             <div class="flex items-center justify-between gap-2">
-                                <!-- LOCAL -->
                                 <div class="text-center flex-1">
                                     <div class="w-12 h-12 mx-auto mb-1 flex items-center justify-center">
                                         <img :src="getTeamLogoUrl(match.equipoLocal)" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'">
@@ -940,7 +993,6 @@
                                     <span class="text-[10px] text-slate-400 font-bold uppercase">Local</span>
                                 </div>
 
-                                <!-- MARCADOR -->
                                 <div class="text-center px-3 py-1 bg-slate-900 text-white rounded-xl shadow shrink-0">
                                     <div class="font-black text-xl tracking-wider theme-text">
                                         <span x-text="match.marcadorLocal || 0"></span> - <span x-text="match.marcadorVisita || 0"></span>
@@ -948,7 +1000,6 @@
                                     <span class="text-[9px] text-slate-400 font-bold uppercase block">Final</span>
                                 </div>
 
-                                <!-- VISITA -->
                                 <div class="text-center flex-1">
                                     <div class="w-12 h-12 mx-auto mb-1 flex items-center justify-center">
                                         <img :src="getTeamLogoUrl(match.equipoVisita)" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'">
@@ -1046,7 +1097,7 @@
                         <table class="w-full text-xs text-left text-slate-700">
                             <thead>
                                 <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase border-b border-slate-200 text-center font-bold">
-                                    <th class="py-3 px-4 text-left">#</th>
+                                    <th class="py-3 px-4 text-left">Foto / #</th>
                                     <th class="py-3 px-4 text-left">Jugador</th>
                                     <th class="py-3 px-4 text-left">Posición</th>
                                     <th class="py-3 px-4 text-center theme-bg-soft theme-text">Pases TD</th>
@@ -1057,9 +1108,19 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 font-medium">
-                                <template x-for="p in filteredPlayers" :key="p.num">
+                                <template x-for="p in filteredPlayers" :key="p.num + p.name">
                                     <tr class="hover:bg-slate-50 transition">
-                                        <td class="py-3 px-4 font-extrabold theme-text" x-text="'#' + p.num"></td>
+                                        <td class="py-3 px-4 flex items-center gap-2 font-extrabold theme-text">
+                                            <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                                <template x-if="p.photo">
+                                                    <img :src="p.photo" class="w-full h-full object-cover">
+                                                </template>
+                                                <template x-if="!p.photo">
+                                                    <i class="fa-solid fa-user text-slate-400 text-xs"></i>
+                                                </template>
+                                            </div>
+                                            <span x-text="'#' + p.num"></span>
+                                        </td>
                                         <td class="py-3 px-4 font-bold text-slate-900" x-text="p.name"></td>
                                         <td class="py-3 px-4 text-slate-500" x-text="p.pos"></td>
                                         <td class="py-3 px-4 text-center font-bold text-slate-800" x-text="p.pasesTD || 0"></td>
@@ -1091,7 +1152,10 @@
                     <template x-for="(mvp, index) in top6PasesTD" :key="'pases-' + mvp.num + mvp.team">
                         <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
+                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
+                                </div>
                                 <div>
                                     <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
                                     <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
@@ -1114,7 +1178,10 @@
                     <template x-for="(mvp, index) in top6Touchdowns" :key="'td-' + mvp.num + mvp.team">
                         <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
+                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
+                                </div>
                                 <div>
                                     <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
                                     <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
@@ -1137,7 +1204,10 @@
                     <template x-for="(mvp, index) in top6Intercepciones" :key="'int-' + mvp.num + mvp.team">
                         <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
+                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
+                                </div>
                                 <div>
                                     <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
                                     <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
@@ -1160,7 +1230,10 @@
                     <template x-for="(mvp, index) in top6Sacks" :key="'sack-' + mvp.num + mvp.team">
                         <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
                             <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-sm" x-text="'#' + (index + 1)"></span>
+                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
+                                </div>
                                 <div>
                                     <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
                                     <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
@@ -1215,7 +1288,7 @@
                         <table class="w-full text-xs text-left text-slate-700">
                             <thead>
                                 <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase border-b border-slate-200 text-center font-bold">
-                                    <th class="py-3 px-4 text-left">#</th>
+                                    <th class="py-3 px-4 text-left">Foto / #</th>
                                     <th class="py-3 px-4 text-left">Jugador</th>
                                     <th class="py-3 px-4 text-left">Posición</th>
                                     <th class="py-3 px-4 text-center theme-bg-soft theme-text">Pases TD</th>
@@ -1228,7 +1301,13 @@
                             <tbody class="divide-y divide-slate-100 font-medium">
                                 <template x-for="p in filteredPlayers" :key="'stat-p-' + p.num">
                                     <tr class="hover:bg-slate-50 transition">
-                                        <td class="py-3 px-4 font-extrabold theme-text" x-text="'#' + p.num"></td>
+                                        <td class="py-3 px-4 flex items-center gap-2 font-extrabold theme-text">
+                                            <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                                <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
+                                                <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-xs"></i></template>
+                                            </div>
+                                            <span x-text="'#' + p.num"></span>
+                                        </td>
                                         <td class="py-3 px-4 font-bold text-slate-900" x-text="p.name"></td>
                                         <td class="py-3 px-4 text-slate-500" x-text="p.pos"></td>
                                         <td class="py-3 px-4 text-center font-bold text-slate-800" x-text="p.pasesTD || 0"></td>
@@ -1253,12 +1332,18 @@
             <div x-show="statsSubTab === 'cards'" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <template x-for="p in filteredPlayers" :key="'card-' + p.num">
-                        <div class="light-card rounded-2xl p-5 border border-slate-200 hover:border-slate-400 transition cursor-pointer relative overflow-hidden group shadow-sm" @click="selectedPlayer = p">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="w-10 h-10 rounded-xl theme-bg-soft border theme-border flex items-center justify-center font-mono font-extrabold theme-text text-base" x-text="'#' + p.num"></span>
-                                <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold" x-text="p.pos"></span>
+                        <div class="light-card rounded-2xl p-5 border border-slate-200 hover:border-slate-400 transition cursor-pointer relative overflow-hidden group shadow-sm flex flex-col justify-between" @click="selectedPlayer = p">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="w-14 h-14 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border theme-border shadow-sm">
+                                        <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
+                                        <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-lg"></i></template>
+                                    </div>
+                                    <span class="w-10 h-10 rounded-xl theme-bg-soft border theme-border flex items-center justify-center font-mono font-extrabold theme-text text-base" x-text="'#' + p.num"></span>
+                                </div>
+                                <h4 class="font-black text-base text-slate-900 mb-1" x-text="p.name"></h4>
+                                <span class="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold inline-block mb-3" x-text="p.pos"></span>
                             </div>
-                            <h4 class="font-black text-lg text-slate-900 mb-3" x-text="p.name"></h4>
                             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                                 <div class="text-slate-500">Pases TD: <strong class="theme-text" x-text="p.pasesTD || 0"></strong></div>
                                 <div class="text-slate-500">TDs: <strong class="theme-text" x-text="p.td || 0"></strong></div>
@@ -1276,7 +1361,7 @@
             </div>
         </div>
 
-        <!-- NUEVA PESTAÑA PRINCIPAL: ADMIN (PROTEGIDA) -->
+        <!-- PESTAÑA ADMIN (PROTEGIDA) -->
         <div x-show="currentTab === 'admin'" x-transition class="space-y-6">
             <template x-if="!isLoggedIn">
                 <div class="light-card p-12 rounded-3xl border theme-border text-center space-y-4 shadow-sm">
@@ -1293,7 +1378,6 @@
 
             <template x-if="isLoggedIn">
                 <div class="space-y-6">
-                    <!-- Sub-pestañas internas del panel de Admin -->
                     <div class="flex items-center justify-between border-b border-slate-200 pb-3 flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <button @click="adminSubTab = 'cedula'" :class="adminSubTab === 'cedula' ? 'theme-gradient font-bold text-white' : 'bg-slate-100 text-slate-600'" class="px-4 py-2 rounded-xl text-xs transition flex items-center gap-2">
@@ -1452,7 +1536,6 @@
                                 </div>
                             </div>
 
-                            <!-- HISTORIAL DE ANOTACIONES REGISTRADAS -->
                             <div class="p-4">
                                 <h5 class="text-[11px] font-bold text-slate-500 uppercase mb-2">Anotaciones registradas en esta Cédula:</h5>
                                 <div class="space-y-1.5 max-h-40 overflow-y-auto">
@@ -1476,7 +1559,7 @@
                             </div>
                         </div>
 
-                        <!-- CAPTURADOR DE INTERCEPCIONES (INT) -->
+                        <!-- CAPTURADOR DE INTERCEPCIONES -->
                         <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm bg-white">
                             <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
                                 <span>CAPTURADOR DE INTERCEPCIONES (INT - DEFENSIVA)</span>
@@ -1512,7 +1595,6 @@
                                 </div>
                             </div>
 
-                            <!-- HISTORIAL DE INTERCEPCIONES REGISTRADAS -->
                             <div class="p-4">
                                 <h5 class="text-[11px] font-bold text-slate-500 uppercase mb-2">Intercepciones registradas en esta Cédula:</h5>
                                 <div class="space-y-1.5 max-h-32 overflow-y-auto">
@@ -1532,7 +1614,7 @@
                             </div>
                         </div>
 
-                        <!-- CAPTURADOR DE SACKS (CAPTURAS DE QB) -->
+                        <!-- CAPTURADOR DE SACKS -->
                         <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-sm bg-white">
                             <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
                                 <span>CAPTURADOR DE SACKS (DEFENSIVA)</span>
@@ -1568,7 +1650,6 @@
                                 </div>
                             </div>
 
-                            <!-- HISTORIAL DE SACKS REGISTRADOS -->
                             <div class="p-4">
                                 <h5 class="text-[11px] font-bold text-slate-500 uppercase mb-2">Sacks registrados en esta Cédula:</h5>
                                 <div class="space-y-1.5 max-h-32 overflow-y-auto">
@@ -1605,7 +1686,7 @@
                                         <table class="w-full text-xs text-left text-slate-700">
                                             <thead>
                                                 <tr class="bg-slate-100 text-slate-600 uppercase border-b border-slate-200 text-center font-bold text-[10px]">
-                                                    <th class="py-2.5 px-3 text-left"># / Jugador</th>
+                                                    <th class="py-2.5 px-3 text-left">Foto / # / Jugador</th>
                                                     <th class="py-2.5 px-2">Pases TD</th>
                                                     <th class="py-2.5 px-2">TDs</th>
                                                     <th class="py-2.5 px-2">Pts Extra</th>
@@ -1617,6 +1698,10 @@
                                                 <template x-for="p in getPlayersStatsForTeamAndJornada(cedula.equipoLocal, cedula.jornada)" :key="'loc-stat-' + p.num">
                                                     <tr class="hover:bg-slate-50 transition text-center">
                                                         <td class="py-2 px-3 font-bold text-slate-900 text-left flex items-center gap-2">
+                                                            <div class="w-7 h-7 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                                                <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
+                                                                <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-[10px]"></i></template>
+                                                            </div>
                                                             <span class="w-6 h-6 rounded-md theme-bg-soft theme-text flex items-center justify-center font-mono font-black" x-text="'#' + p.num"></span>
                                                             <span x-text="p.name"></span>
                                                         </td>
@@ -1642,7 +1727,7 @@
                                         <table class="w-full text-xs text-left text-slate-700">
                                             <thead>
                                                 <tr class="bg-slate-100 text-slate-600 uppercase border-b border-slate-200 text-center font-bold text-[10px]">
-                                                    <th class="py-2.5 px-3 text-left"># / Jugador</th>
+                                                    <th class="py-2.5 px-3 text-left">Foto / # / Jugador</th>
                                                     <th class="py-2.5 px-2">Pases TD</th>
                                                     <th class="py-2.5 px-2">TDs</th>
                                                     <th class="py-2.5 px-2">Pts Extra</th>
@@ -1654,6 +1739,10 @@
                                                 <template x-for="p in getPlayersStatsForTeamAndJornada(cedula.equipoVisita, cedula.jornada)" :key="'vis-stat-' + p.num">
                                                     <tr class="hover:bg-slate-50 transition text-center">
                                                         <td class="py-2 px-3 font-bold text-slate-900 text-left flex items-center gap-2">
+                                                            <div class="w-7 h-7 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                                                <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
+                                                                <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-[10px]"></i></template>
+                                                            </div>
                                                             <span class="w-6 h-6 rounded-md theme-bg-soft theme-text flex items-center justify-center font-mono font-black" x-text="'#' + p.num"></span>
                                                             <span x-text="p.name"></span>
                                                         </td>
@@ -1687,13 +1776,13 @@
                         <!-- OBSERVACIONES -->
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
                             <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
-                                <i class="fa-solid fa-gavel theme-text"></i> Observaciones de Árbitros / Referee
+                                <i class="fa-solid fa-gavel theme-text"></i> Observations de Árbitros / Referee
                             </h4>
                             <textarea x-model="cedula.obsReferees" rows="2" placeholder="Incidencias, amarillas, rojas o notas del referee..." class="w-full bg-white border border-slate-300 rounded-xl p-2 focus:outline-none"></textarea>
                         </div>
                     </div>
 
-                    <!-- SUB-PESTAÑA 2: GESTIÓN DE ROSTERS -->
+                    <!-- SUB-PESTAÑA 2: GESTIÓN DE ROSTERS (CON EDICIÓN Y FOTOS) -->
                     <div x-show="adminSubTab === 'rosters'" class="light-card p-6 rounded-3xl border theme-border shadow-sm space-y-6" x-transition>
                         <div class="flex items-center justify-between border-b border-slate-200 pb-4 flex-wrap gap-3">
                             <div class="flex items-center gap-3">
@@ -1702,7 +1791,7 @@
                                 </div>
                                 <div>
                                     <h2 class="font-brand font-black text-xl text-slate-900">ADMINISTRADOR DE ROSTERS OFICIALES</h2>
-                                    <p class="text-xs text-slate-500">Alta y validación de plantillas de jugadores para cada equipo y categoría.</p>
+                                    <p class="text-xs text-slate-500">Alta, edición con fotografía y validación de plantillas de jugadores.</p>
                                 </div>
                             </div>
 
@@ -1715,30 +1804,52 @@
                             </div>
                         </div>
 
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                            <h3 class="font-brand font-bold text-xs uppercase text-slate-700 mb-3 flex items-center gap-1.5">
-                                <i class="fa-solid fa-user-plus theme-text"></i> Registrar Nuevo Jugador en <span class="theme-text" x-text="selectedTeam"></span>
+                        <!-- FORMULARIO ALTA / EDICIÓN DE JUGADOR -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                            <h3 class="font-brand font-bold text-xs uppercase text-slate-700 flex items-center justify-between">
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fa-solid" :class="editingPlayerOriginalNum !== null ? 'fa-user-pen theme-text' : 'fa-user-plus theme-text'"></i>
+                                    <span x-text="editingPlayerOriginalNum !== null ? 'Editando Jugador #' + editingPlayerOriginalNum : 'Registrar Nuevo Jugador en ' + selectedTeam"></span>
+                                </span>
+                                <template x-if="editingPlayerOriginalNum !== null">
+                                    <button @click="cancelEditPlayer()" class="text-red-600 text-[11px] underline hover:text-red-800">Cancelar Edición</button>
+                                </template>
                             </h3>
 
-                            <div class="flex flex-wrap gap-3 items-end">
-                                <div class="w-24">
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end text-xs">
+                                <div class="sm:col-span-2">
                                     <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1"># Jersey</label>
-                                    <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400">
+                                    <input type="text" x-model="newPlayerNum" placeholder="Ej. 10" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-900">
                                 </div>
-                                <div class="flex-1 min-w-[180px]">
+                                <div class="sm:col-span-4">
                                     <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nombre Completo</label>
-                                    <input type="text" x-model="newPlayerName" placeholder="Ej. Juan Pérez" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400">
+                                    <input type="text" x-model="newPlayerName" placeholder="Ej. Juan Pérez" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-900">
                                 </div>
-                                <div class="w-36">
+                                <div class="sm:col-span-3">
                                     <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Posición</label>
-                                    <input type="text" x-model="newPlayerPos" placeholder="Ej. QB / WR" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400">
+                                    <input type="text" x-model="newPlayerPos" placeholder="Ej. QB / WR" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-900">
                                 </div>
-                                <button @click="addPlayerToTeam()" class="theme-gradient text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow hover:scale-105 transition flex items-center gap-1.5">
-                                    <i class="fa-solid fa-plus"></i> Guardar Jugador
-                                </button>
+                                <div class="sm:col-span-3">
+                                    <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Foto (Subir archivo o URL)</label>
+                                    <input type="file" @change="handlePlayerPhotoUpload" accept="image/*" class="w-full bg-white border border-slate-300 rounded-xl px-2 py-1 text-[10px] text-slate-700 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2">
+                                <div class="flex items-center gap-2" x-show="newPlayerPhoto">
+                                    <img :src="newPlayerPhoto" class="w-8 h-8 rounded-full object-cover border border-slate-300">
+                                    <span class="text-[10px] text-slate-500 italic">Foto cargada correctamente</span>
+                                </div>
+                                <div class="ml-auto">
+                                    <button @click="addOrUpdatePlayerToTeam()" class="theme-gradient text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow hover:scale-105 transition flex items-center gap-1.5">
+                                        <i class="fa-solid" :class="editingPlayerOriginalNum !== null ? 'fa-floppy-disk' : 'fa-plus'"></i> 
+                                        <span x-text="editingPlayerOriginalNum !== null ? 'Actualizar Jugador' : 'Guardar Jugador'"></span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- LISTA / TABLA DE ROSTER -->
                         <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                             <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
                                 <span>PLANTILLA OFICIAL: <span class="theme-text uppercase" x-text="selectedTeam"></span> (<span x-text="selectedCategory"></span>)</span>
@@ -1749,20 +1860,29 @@
                                 <table class="w-full text-xs text-left text-slate-700">
                                     <thead>
                                         <tr class="bg-slate-100 text-slate-600 uppercase border-b border-slate-200 font-extrabold text-[10px]">
-                                            <th class="py-3 px-4 text-center w-16">#</th>
+                                            <th class="py-3 px-4 text-center w-20">Foto / #</th>
                                             <th class="py-3 px-4 text-left">Nombre Completo del Jugador</th>
                                             <th class="py-3 px-4 text-left">Posición</th>
-                                            <th class="py-3 px-4 text-center w-24">Acciones</th>
+                                            <th class="py-3 px-4 text-center w-28">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 bg-white">
                                         <template x-for="p in currentRoster" :key="'roster-list-' + p.num">
                                             <tr class="hover:bg-slate-50 transition">
-                                                <td class="py-3 px-4 text-center font-black font-mono theme-text text-sm" x-text="'#' + p.num"></td>
+                                                <td class="py-3 px-4 text-center flex items-center justify-center gap-2">
+                                                    <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
+                                                        <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
+                                                        <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-xs"></i></template>
+                                                    </div>
+                                                    <span class="font-black font-mono theme-text text-sm" x-text="'#' + p.num"></span>
+                                                </td>
                                                 <td class="py-3 px-4 font-bold text-slate-900" x-text="p.name"></td>
                                                 <td class="py-3 px-4 text-slate-500 font-medium" x-text="p.pos"></td>
-                                                <td class="py-3 px-4 text-center">
-                                                    <button @click="removePlayerFromTeam(p.num)" class="text-red-600 hover:text-red-500 p-1 rounded-lg transition" title="Eliminar del roster">
+                                                <td class="py-3 px-4 text-center space-x-1">
+                                                    <button @click="editPlayerInTeam(p)" class="text-blue-600 hover:text-blue-500 p-1.5 rounded-lg transition bg-blue-50 border border-blue-200" title="Editar jugador">
+                                                        <i class="fa-solid fa-pen"></i>
+                                                    </button>
+                                                    <button @click="removePlayerFromTeam(p.num)" class="text-red-600 hover:text-red-500 p-1.5 rounded-lg transition bg-red-50 border border-red-200" title="Eliminar del roster">
                                                         <i class="fa-solid fa-trash-can"></i>
                                                     </button>
                                                 </td>
@@ -1909,7 +2029,7 @@
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white py-4 mt-8 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-xs text-slate-500 font-medium">© 2026 <span class="theme-text font-bold font-brand">Lexfa Flag Mex</span> • Official Statistics Hub</p>
+            <p class="text-xs text-slate-500 font-medium">© 2026 <span class="theme-text font-brand font-bold">Lexfa Flag Mex</span> • Official Statistics Hub</p>
         </div>
     </footer>
 </body>
