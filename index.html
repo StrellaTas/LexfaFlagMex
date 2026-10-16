@@ -122,7 +122,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '27.0',
+                DATA_VERSION: '28.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 statsSubTab: 'players', 
@@ -188,10 +188,6 @@
                     equipo: '',
                     numInterceptor: ''
                 },
-
-                anotacionesRegistradas: [],
-                sacksRegistrados: [],
-                intercepcionesRegistradas: [],
 
                 editingPlayerOriginalNum: null,
                 newPlayerNum: '',
@@ -1348,22 +1344,22 @@
                 </div>
             </div>
 
+            <!-- TARJETAS DE JUGADORES (FORMATO VERTICAL TIPO MVP) -->
             <div x-show="statsSubTab === 'cards'" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     <template x-for="p in filteredPlayers" :key="'card-' + p.num">
-                        <div class="light-card rounded-2xl p-5 border border-slate-200 hover:border-slate-400 transition cursor-pointer relative overflow-hidden group shadow-sm flex flex-col justify-between" @click="selectedPlayer = p">
-                            <div>
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="w-14 h-14 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border theme-border shadow-sm">
-                                        <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
-                                        <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-lg"></i></template>
-                                    </div>
-                                    <span class="w-10 h-10 rounded-xl theme-bg-soft border theme-border flex items-center justify-center font-mono font-extrabold theme-text text-base" x-text="'#' + p.num"></span>
-                                </div>
-                                <h4 class="font-black text-base text-slate-900 mb-1" x-text="p.name"></h4>
-                                <span class="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold inline-block mb-3" x-text="p.pos"></span>
+                        <div class="light-card p-5 rounded-3xl border theme-border relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:scale-105 transition cursor-pointer" @click="selectedPlayer = p">
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-xs shadow" x-text="'#' + p.num"></span>
+                            
+                            <div class="w-24 h-24 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border theme-border shadow-md my-2">
+                                <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
+                                <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-3xl"></i></template>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+
+                            <h4 class="font-black text-sm text-slate-900 mt-2 line-clamp-1" x-text="p.name"></h4>
+                            <p class="text-[11px] text-slate-500 font-medium" x-text="p.pos + ' • ' + selectedTeam"></p>
+                            
+                            <div class="mt-3 pt-3 border-t border-slate-100 w-full grid grid-cols-2 gap-1.5 text-[11px] bg-slate-50 p-2 rounded-xl border border-slate-200">
                                 <div class="text-slate-500">Pases TD: <strong class="theme-text" x-text="p.pasesTD || 0"></strong></div>
                                 <div class="text-slate-500">TDs: <strong class="theme-text" x-text="p.td || 0"></strong></div>
                                 <div class="text-slate-500">INTs: <strong class="theme-text" x-text="p.intercepcion || 0"></strong></div>
