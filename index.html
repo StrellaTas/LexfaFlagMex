@@ -122,7 +122,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('lexfaHub', () => ({
-                DATA_VERSION: '26.0',
+                DATA_VERSION: '27.0',
                 currentTab: 'home',
                 tableSubTab: 'teams', 
                 statsSubTab: 'players', 
@@ -193,7 +193,6 @@
                 sacksRegistrados: [],
                 intercepcionesRegistradas: [],
 
-                // Campos para Gestión de Rosters (con soporte de Edición y Foto)
                 editingPlayerOriginalNum: null,
                 newPlayerNum: '',
                 newPlayerName: '',
@@ -248,6 +247,35 @@
                         this.anotacionesRegistradas = [];
                         this.sacksRegistrados = [];
                         this.intercepcionesRegistradas = [];
+                    }
+                },
+
+                loadMatchForEditing(match) {
+                    this.cedula.jornada = match.jornada || '1';
+                    this.cedula.fecha = match.fecha || new Date().toISOString().split('T')[0];
+                    this.cedula.campo = match.campo || 'Campo 1';
+                    this.cedula.equipoLocal = match.equipoLocal || '';
+                    this.cedula.equipoVisita = match.equipoVisita || '';
+                    this.cedula.marcadorLocal = Number(match.marcadorLocal || 0);
+                    this.cedula.marcadorVisita = Number(match.marcadorVisita || 0);
+                    this.cedula.obsReferees = match.obsReferees || '';
+                    this.anotacionesRegistradas = match.anotaciones ? JSON.parse(JSON.stringify(match.anotaciones)) : [];
+                    this.sacksRegistrados = match.sacks ? JSON.parse(JSON.stringify(match.sacks)) : [];
+                    this.intercepcionesRegistradas = match.intercepciones ? JSON.parse(JSON.stringify(match.intercepciones)) : [];
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+
+                deleteMatchFromHistory(match) {
+                    if (!confirm(`¿Estás seguro de eliminar el partido ${match.equipoLocal} vs ${match.equipoVisita} (Jornada ${match.jornada})?`)) return;
+                    const matches = this.matchesHistory[this.selectedCategory] || [];
+                    const index = matches.findIndex(m => 
+                        String(m.jornada) === String(match.jornada) && 
+                        m.equipoLocal === match.equipoLocal && 
+                        m.equipoVisita === match.equipoVisita
+                    );
+                    if (index !== -1) {
+                        matches.splice(index, 1);
+                        this.saveToFirebase(true);
                     }
                 },
 
@@ -514,7 +542,6 @@
                     
                     const roster = this.currentRoster;
 
-                    // Si estamos editando un jugador existente
                     if (this.editingPlayerOriginalNum !== null) {
                         const index = roster.findIndex(p => String(p.num) === String(this.editingPlayerOriginalNum));
                         if (index !== -1) {
@@ -525,7 +552,6 @@
                         }
                         this.cancelEditPlayer();
                     } else {
-                        // Alta de nuevo jugador
                         if (roster.some(p => String(p.num) === String(this.newPlayerNum))) {
                             alert("El número de camiseta ya existe en este equipo."); return;
                         }
@@ -646,32 +672,33 @@
                     return playersList;
                 },
 
-                get top6PasesTD() {
+                // TOP 5 MVPs
+                get top5PasesTD() {
                     return [...this.allCategoryPlayersConsolidated]
                         .filter(p => p.pasesTD > 0)
                         .sort((a, b) => b.pasesTD - a.pasesTD)
-                        .slice(0, 6);
+                        .slice(0, 5);
                 },
 
-                get top6Touchdowns() {
+                get top5Touchdowns() {
                     return [...this.allCategoryPlayersConsolidated]
                         .filter(p => p.td > 0)
                         .sort((a, b) => b.td - a.td)
-                        .slice(0, 6);
+                        .slice(0, 5);
                 },
 
-                get top6Intercepciones() {
+                get top5Intercepciones() {
                     return [...this.allCategoryPlayersConsolidated]
                         .filter(p => p.intercepcion > 0)
                         .sort((a, b) => b.intercepcion - a.intercepcion)
-                        .slice(0, 6);
+                        .slice(0, 5);
                 },
 
-                get top6Sacks() {
+                get top5Sacks() {
                     return [...this.allCategoryPlayersConsolidated]
                         .filter(p => p.sacks > 0)
                         .sort((a, b) => b.sacks - a.sacks)
-                        .slice(0, 6);
+                        .slice(0, 5);
                 },
 
                 get filteredPlayers() {
@@ -974,7 +1001,6 @@
                     </div>
                 </div>
 
-                <!-- LISTA DE PARTIDOS -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="match in matchesForSelectedJornada" :key="'m-' + match.jornada + '-' + match.equipoLocal + '-' + match.equipoVisita">
                         <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:border-slate-300 transition flex flex-col justify-between gap-4">
@@ -1112,12 +1138,8 @@
                                     <tr class="hover:bg-slate-50 transition">
                                         <td class="py-3 px-4 flex items-center gap-2 font-extrabold theme-text">
                                             <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
-                                                <template x-if="p.photo">
-                                                    <img :src="p.photo" class="w-full h-full object-cover">
-                                                </template>
-                                                <template x-if="!p.photo">
-                                                    <i class="fa-solid fa-user text-slate-400 text-xs"></i>
-                                                </template>
+                                                <template x-if="p.photo"><img :src="p.photo" class="w-full h-full object-cover"></template>
+                                                <template x-if="!p.photo"><i class="fa-solid fa-user text-slate-400 text-xs"></i></template>
                                             </div>
                                             <span x-text="'#' + p.num"></span>
                                         </td>
@@ -1137,111 +1159,115 @@
             </div>
         </div>
 
-        <!-- LÍDERES MVPs -->
+        <!-- LÍDERES MVPs (TOP 5 CON FOTO GRANDE) -->
         <div x-show="currentTab === 'mvp'" x-transition class="space-y-8">
             <div class="theme-bg-soft border theme-border p-4 rounded-2xl text-xs theme-text flex items-center gap-3 shadow-sm">
                 <i class="fa-solid fa-trophy text-2xl"></i>
-                <span>Líderes destacados (Top 6) en la categoría <strong><span x-text="selectedCategory"></span></strong> analizando a todos los equipos registrados.</span>
+                <span>Líderes destacados (Top 5) en la categoría <strong><span x-text="selectedCategory"></span></strong>.</span>
             </div>
 
+            <!-- PASES TD (TOP 5) -->
             <div>
-                <h3 class="font-brand font-black text-sm uppercase theme-text mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-football"></i> Top 6 - Pases de Anotación (Pases TD)
+                <h3 class="font-brand font-black text-sm uppercase theme-text mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-football"></i> Top 5 - Pases de Anotación (Pases TD)
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <template x-for="(mvp, index) in top6PasesTD" :key="'pases-' + mvp.num + mvp.team">
-                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
-                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
-                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
-                                </div>
-                                <div>
-                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
-                                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <template x-for="(mvp, index) in top5PasesTD" :key="'pases-top5-' + mvp.num + mvp.team">
+                        <div class="light-card p-5 rounded-3xl border theme-border relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:scale-105 transition">
+                            <span class="absolute top-3 left-3 w-7 h-7 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-xs shadow" x-text="'#' + (index + 1)"></span>
+                            
+                            <div class="w-24 h-24 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border theme-border shadow-md my-2">
+                                <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                <template x-if="!mvp.photo"><i class="fa-solid fa-user text-slate-400 text-3xl"></i></template>
                             </div>
-                            <div class="text-right">
-                                <span class="block text-xl font-black theme-text" x-text="mvp.pasesTD"></span>
-                                <span class="text-[9px] uppercase text-slate-400 font-bold">Pases TD</span>
+
+                            <h4 class="font-black text-sm text-slate-900 mt-2 line-clamp-1" x-text="mvp.name"></h4>
+                            <p class="text-[11px] text-slate-500 font-medium" x-text="'#' + mvp.num + ' • ' + mvp.team"></p>
+                            
+                            <div class="mt-3 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                <span class="text-2xl font-black theme-text" x-text="mvp.pasesTD"></span>
+                                <span class="text-[10px] uppercase text-slate-400 font-bold">Pases TD</span>
                             </div>
                         </div>
                     </template>
                 </div>
             </div>
 
+            <!-- TOUCHDOWNS (TOP 5) -->
             <div>
-                <h3 class="font-brand font-black text-sm uppercase theme-text mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-bullseye"></i> Top 6 - Touchdowns (TDs Anotados)
+                <h3 class="font-brand font-black text-sm uppercase theme-text mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye"></i> Top 5 - Touchdowns (TDs Anotados)
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <template x-for="(mvp, index) in top6Touchdowns" :key="'td-' + mvp.num + mvp.team">
-                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
-                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
-                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
-                                </div>
-                                <div>
-                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
-                                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <template x-for="(mvp, index) in top5Touchdowns" :key="'td-top5-' + mvp.num + mvp.team">
+                        <div class="light-card p-5 rounded-3xl border theme-border relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:scale-105 transition">
+                            <span class="absolute top-3 left-3 w-7 h-7 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-xs shadow" x-text="'#' + (index + 1)"></span>
+                            
+                            <div class="w-24 h-24 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border theme-border shadow-md my-2">
+                                <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                <template x-if="!mvp.photo"><i class="fa-solid fa-user text-slate-400 text-3xl"></i></template>
                             </div>
-                            <div class="text-right">
-                                <span class="block text-xl font-black theme-text" x-text="mvp.td"></span>
-                                <span class="text-[9px] uppercase text-slate-400 font-bold">TDs</span>
+
+                            <h4 class="font-black text-sm text-slate-900 mt-2 line-clamp-1" x-text="mvp.name"></h4>
+                            <p class="text-[11px] text-slate-500 font-medium" x-text="'#' + mvp.num + ' • ' + mvp.team"></p>
+                            
+                            <div class="mt-3 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                <span class="text-2xl font-black theme-text" x-text="mvp.td"></span>
+                                <span class="text-[10px] uppercase text-slate-400 font-bold">TDs</span>
                             </div>
                         </div>
                     </template>
                 </div>
             </div>
 
+            <!-- INTERCEPCIONES (TOP 5) -->
             <div>
-                <h3 class="font-brand font-black text-sm uppercase theme-text mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved"></i> Top 6 - Intercepciones (INT)
+                <h3 class="font-brand font-black text-sm uppercase theme-text mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i> Top 5 - Intercepciones (INT)
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <template x-for="(mvp, index) in top6Intercepciones" :key="'int-' + mvp.num + mvp.team">
-                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
-                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
-                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
-                                </div>
-                                <div>
-                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
-                                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <template x-for="(mvp, index) in top5Intercepciones" :key="'int-top5-' + mvp.num + mvp.team">
+                        <div class="light-card p-5 rounded-3xl border theme-border relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:scale-105 transition">
+                            <span class="absolute top-3 left-3 w-7 h-7 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-xs shadow" x-text="'#' + (index + 1)"></span>
+                            
+                            <div class="w-24 h-24 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border theme-border shadow-md my-2">
+                                <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                <template x-if="!mvp.photo"><i class="fa-solid fa-user text-slate-400 text-3xl"></i></template>
                             </div>
-                            <div class="text-right">
-                                <span class="block text-xl font-black theme-text" x-text="mvp.intercepcion"></span>
-                                <span class="text-[9px] uppercase text-slate-400 font-bold">INTs</span>
+
+                            <h4 class="font-black text-sm text-slate-900 mt-2 line-clamp-1" x-text="mvp.name"></h4>
+                            <p class="text-[11px] text-slate-500 font-medium" x-text="'#' + mvp.num + ' • ' + mvp.team"></p>
+                            
+                            <div class="mt-3 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                <span class="text-2xl font-black theme-text" x-text="mvp.intercepcion"></span>
+                                <span class="text-[10px] uppercase text-slate-400 font-bold">INTs</span>
                             </div>
                         </div>
                     </template>
                 </div>
             </div>
 
+            <!-- SACKS (TOP 5) -->
             <div>
-                <h3 class="font-brand font-black text-sm uppercase theme-text mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-hand-fist"></i> Top 6 - Sacks (Capturas QB)
+                <h3 class="font-brand font-black text-sm uppercase theme-text mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-hand-fist"></i> Top 5 - Sacks (Capturas QB)
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <template x-for="(mvp, index) in top6Sacks" :key="'sack-' + mvp.num + mvp.team">
-                        <div class="light-card p-4 rounded-2xl border theme-border relative overflow-hidden flex items-center justify-between shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300">
-                                    <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
-                                    <template x-if="!mvp.photo"><span class="font-mono font-black text-xs text-slate-600" x-text="'#' + mvp.num"></span></template>
-                                </div>
-                                <div>
-                                    <h4 class="font-black text-sm text-slate-900" x-text="mvp.name"></h4>
-                                    <p class="text-[11px] text-slate-500" x-text="'#' + mvp.num + ' • ' + mvp.team + ' (' + mvp.pos + ')'"></p>
-                                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <template x-for="(mvp, index) in top5Sacks" :key="'sack-top5-' + mvp.num + mvp.team">
+                        <div class="light-card p-5 rounded-3xl border theme-border relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:scale-105 transition">
+                            <span class="absolute top-3 left-3 w-7 h-7 rounded-xl theme-gradient flex items-center justify-center font-mono font-black text-white text-xs shadow" x-text="'#' + (index + 1)"></span>
+                            
+                            <div class="w-24 h-24 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border theme-border shadow-md my-2">
+                                <template x-if="mvp.photo"><img :src="mvp.photo" class="w-full h-full object-cover"></template>
+                                <template x-if="!mvp.photo"><i class="fa-solid fa-user text-slate-400 text-3xl"></i></template>
                             </div>
-                            <div class="text-right">
-                                <span class="block text-xl font-black theme-text" x-text="mvp.sacks"></span>
-                                <span class="text-[9px] uppercase text-slate-400 font-bold">Sacks</span>
+
+                            <h4 class="font-black text-sm text-slate-900 mt-2 line-clamp-1" x-text="mvp.name"></h4>
+                            <p class="text-[11px] text-slate-500 font-medium" x-text="'#' + mvp.num + ' • ' + mvp.team"></p>
+                            
+                            <div class="mt-3 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                <span class="text-2xl font-black theme-text" x-text="mvp.sacks"></span>
+                                <span class="text-[10px] uppercase text-slate-400 font-bold">Sacks</span>
                             </div>
                         </div>
                     </template>
@@ -1278,7 +1304,6 @@
                 </div>
             </div>
 
-            <!-- Sub-pestaña 1: Estadísticas por Jugador -->
             <div x-show="statsSubTab === 'players'" class="space-y-4">
                 <div class="light-card rounded-2xl overflow-hidden shadow-sm theme-border">
                     <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
@@ -1319,16 +1344,10 @@
                                 </template>
                             </tbody>
                         </table>
-                        <template x-if="filteredPlayers.length === 0">
-                            <div class="p-8 text-center text-slate-400 text-xs italic bg-slate-50">
-                                No se encontraron jugadores para este equipo.
-                            </div>
-                        </template>
                     </div>
                 </div>
             </div>
 
-            <!-- Sub-pestaña 2: Tarjetas de Jugadores -->
             <div x-show="statsSubTab === 'cards'" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <template x-for="p in filteredPlayers" :key="'card-' + p.num">
@@ -1353,11 +1372,6 @@
                         </div>
                     </template>
                 </div>
-                <template x-if="filteredPlayers.length === 0">
-                    <div class="p-12 text-center text-slate-400 text-xs italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                        No hay tarjetas de jugadores registradas para este equipo.
-                    </div>
-                </template>
             </div>
         </div>
 
@@ -1392,8 +1406,43 @@
                         </button>
                     </div>
 
-                    <!-- SUB-PESTAÑA 1: CÉDULA DE JUEGO -->
+                    <!-- SUB-PESTAÑA 1: CÉDULA DE JUEGO (CON GESTIÓN DE HISTORIAL / EDICIÓN Y BORRADO) -->
                     <div x-show="adminSubTab === 'cedula'" class="light-card p-6 rounded-3xl border border-slate-300 shadow-md space-y-6" x-transition>
+                        
+                        <!-- GESTIÓN RÁPIDA DE PARTIDOS ANTERIORES PARA EDITAR / BORRAR -->
+                        <div class="bg-slate-900 text-white p-4 rounded-2xl space-y-3 shadow">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <h4 class="font-brand font-black text-xs uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-clock-rotate-left theme-text"></i> Historial y Corrección de Partidos (<span x-text="selectedCategory"></span>)
+                                </h4>
+                                <span class="text-[10px] text-slate-400">Edita o elimina partidos cargados por error</span>
+                            </div>
+
+                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                                <template x-for="match in (matchesHistory[selectedCategory] || [])" :key="'admin-match-' + match.jornada + match.equipoLocal + match.equipoVisita">
+                                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs flex items-center justify-between gap-3">
+                                        <div>
+                                            <span class="theme-text font-bold">Jornada <span x-text="match.jornada"></span></span> • 
+                                            <span class="text-white font-bold" x-text="match.equipoLocal"></span> 
+                                            <span class="text-slate-400 font-bold" x-text="(match.marcadorLocal || 0) + ' - ' + (match.marcadorVisita || 0)"></span> 
+                                            <span class="text-white font-bold" x-text="match.equipoVisita"></span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            <button @click="loadMatchForEditing(match)" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                                                <i class="fa-solid fa-pen-to-square"></i> Editar Cédula
+                                            </button>
+                                            <button @click="deleteMatchFromHistory(match)" class="bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                                                <i class="fa-solid fa-trash"></i> Borrar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="!matchesHistory[selectedCategory] || matchesHistory[selectedCategory].length === 0">
+                                    <p class="text-slate-400 text-xs italic text-center py-2">No hay partidos registrados en esta categoría para corregir.</p>
+                                </template>
+                            </div>
+                        </div>
+
                         <div class="flex items-center justify-between border-b border-slate-200 pb-4 flex-wrap gap-3">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-2xl theme-bg-soft border theme-border flex items-center justify-center theme-text text-2xl font-black">
@@ -1776,13 +1825,13 @@
                         <!-- OBSERVACIONES -->
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
                             <h4 class="font-brand font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
-                                <i class="fa-solid fa-gavel theme-text"></i> Observations de Árbitros / Referee
+                                <i class="fa-solid fa-gavel theme-text"></i> Observaciones de Árbitros / Referee
                             </h4>
                             <textarea x-model="cedula.obsReferees" rows="2" placeholder="Incidencias, amarillas, rojas o notas del referee..." class="w-full bg-white border border-slate-300 rounded-xl p-2 focus:outline-none"></textarea>
                         </div>
                     </div>
 
-                    <!-- SUB-PESTAÑA 2: GESTIÓN DE ROSTERS (CON EDICIÓN Y FOTOS) -->
+                    <!-- SUB-PESTAÑA 2: GESTIÓN DE ROSTERS -->
                     <div x-show="adminSubTab === 'rosters'" class="light-card p-6 rounded-3xl border theme-border shadow-sm space-y-6" x-transition>
                         <div class="flex items-center justify-between border-b border-slate-200 pb-4 flex-wrap gap-3">
                             <div class="flex items-center gap-3">
@@ -1804,7 +1853,6 @@
                             </div>
                         </div>
 
-                        <!-- FORMULARIO ALTA / EDICIÓN DE JUGADOR -->
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                             <h3 class="font-brand font-bold text-xs uppercase text-slate-700 flex items-center justify-between">
                                 <span class="flex items-center gap-1.5">
@@ -1849,7 +1897,6 @@
                             </div>
                         </div>
 
-                        <!-- LISTA / TABLA DE ROSTER -->
                         <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                             <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold font-brand">
                                 <span>PLANTILLA OFICIAL: <span class="theme-text uppercase" x-text="selectedTeam"></span> (<span x-text="selectedCategory"></span>)</span>
